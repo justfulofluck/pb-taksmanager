@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Pinobite",
+  "description": "A high-fidelity real-time collaborative task management system designed for remote teams.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

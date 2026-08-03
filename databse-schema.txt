@@ -1,0 +1,117 @@
+Based on the application's architecture and the features implemented (Tasks, Subtasks, Attachments, Team Management, and Activity Logs), here is the SQL database schema designed for MySQL (or SQLite, as the syntax is largely compatible).
+🗄️ Relational Database Schema (MySQL/SQLite)
+This schema covers all entities currently used in your workspace, including the newly added Subtasks and Attachments systems.
+code
+SQL
+-- 1. Team Members (Users)
+CREATE TABLE team_members (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255),
+    role VARCHAR(255),
+    department VARCHAR(255),
+    access_level VARCHAR(20) DEFAULT 'Member', -- Admin, Member, Viewer
+    avatar_char CHAR(1),
+    color VARCHAR(50),
+    onboarding_status VARCHAR(20) DEFAULT 'Invited', -- Invited, In Progress, Completed
+    location VARCHAR(255),
+    timezone VARCHAR(100),
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    bio TEXT
+);
+
+-- 2. Member Skills (Multi-value attribute for Team Members)
+CREATE TABLE member_skills (
+    member_id VARCHAR(50),
+    skill VARCHAR(100),
+    PRIMARY KEY (member_id, skill),
+    FOREIGN KEY (member_id) REFERENCES team_members(id) ON DELETE CASCADE
+);
+
+-- 3. Tasks
+CREATE TABLE tasks (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'Not started', -- Not started, In progress, Done
+    priority VARCHAR(50) DEFAULT 'Medium Priority',
+    due_date DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    FOREIGN KEY (created_by) REFERENCES team_members(id)
+);
+
+-- 4. Task Assignments (Junction table for many-to-many relationship)
+CREATE TABLE task_assignments (
+    task_id VARCHAR(50),
+    member_id VARCHAR(50),
+    PRIMARY KEY (task_id, member_id),
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    FOREIGN KEY (member_id) REFERENCES team_members(id) ON DELETE CASCADE
+);
+
+-- 5. Task Tags (Multi-value attribute for Tasks)
+CREATE TABLE task_tags (
+    task_id VARCHAR(50),
+    tag VARCHAR(100),
+    PRIMARY KEY (task_id, tag),
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- 6. Subtasks (Nested items within a Task)
+CREATE TABLE subtasks (
+    id VARCHAR(50) PRIMARY KEY,
+    task_id VARCHAR(50),
+    title VARCHAR(255) NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- 7. Task Attachments (External links)
+CREATE TABLE attachments (
+    id VARCHAR(50) PRIMARY KEY,
+    task_id VARCHAR(50),
+    name VARCHAR(255),
+    url TEXT NOT NULL,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- 8. Comments (Collaborative Discussion)
+CREATE TABLE comments (
+    id VARCHAR(50) PRIMARY KEY,
+    task_id VARCHAR(50),
+    sender_id VARCHAR(50),
+    content TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES team_members(id)
+);
+
+-- 9. Activity Logs (Audit Trail)
+CREATE TABLE activity_logs (
+    id VARCHAR(50) PRIMARY KEY,
+    task_id VARCHAR(50),
+    user_id VARCHAR(50),
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES team_members(id)
+);
+
+-- 10. Social Media Posts (Marketing Module)
+CREATE TABLE social_media_posts (
+    id VARCHAR(50) PRIMARY KEY,
+    platform VARCHAR(50),
+    content TEXT,
+    status VARCHAR(50),
+    scheduled_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    FOREIGN KEY (created_by) REFERENCES team_members(id)
+);
+🔑 Key Relationship Notes:
+Users to Tasks: Linked via created_by (one-to-many) and the task_assignments junction table (many-to-many).
+Tasks to Subtasks/Attachments: One-to-many relationship; when a Task is deleted, its subtasks and attachments are automatically removed (ON DELETE CASCADE).
+Activity Logs: Tracks who did what. If a task is deleted, the log remains but the task_id reference is set to null to preserve history.
