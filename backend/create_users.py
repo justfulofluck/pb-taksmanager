@@ -26,7 +26,7 @@ SUPER_ADMIN = {
 }
 
 # Additional users to provision: add dicts with the same keys as SUPER_ADMIN.
-# access_level options: 'Super Admin' | 'Admin' | 'Member' | 'Viewer'
+# access_level options: 'Super Admin' | 'Member'
 EXTRA_USERS = []
 
 

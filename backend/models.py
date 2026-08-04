@@ -12,7 +12,7 @@ class TeamMemberDB(Base):
     password = Column(String(255), nullable=True)
     role = Column(String(255), nullable=True)
     department = Column(String(255), nullable=True) # maps to team
-    access_level = Column(String(20), default="Member") # Admin, Member, Viewer
+    access_level = Column(String(20), default="Member") # Super Admin, Member
     avatar_char = Column(String(10), nullable=True, default="U")
     avatar_url = Column(String(500), nullable=True)
     color = Column(String(50), nullable=True, default="bg-indigo-500")

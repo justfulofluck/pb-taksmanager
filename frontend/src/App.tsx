@@ -40,7 +40,7 @@ import {
   Megaphone
 } from 'lucide-react';
 import { Task, TaskStatus, TaskPriority, TeamMember } from './types';
-import { INITIAL_TASKS } from './data/team';
+
 import { ApiClient } from './api';
 import Auth from './components/Auth';
 import OverviewTable from './components/OverviewTable';
@@ -82,7 +82,7 @@ export default function App() {
   );
 
   const isAdmin = currentUserMember 
-    ? (currentUserMember.accessLevel === 'Admin' || currentUserMember.accessLevel === 'Super Admin' || currentUserMember.email === 'admin@pinobite.com')
+    ? (currentUserMember.accessLevel === 'Super Admin' || currentUserMember.email === 'admin@pinobite.com')
     : (currentUser?.email === 'admin@pinobite.com');
 
   // Guard restricted views for non-admins & specific team roles
@@ -158,15 +158,7 @@ export default function App() {
   useEffect(() => {
     const load = async () => {
       const list = await ApiClient.getTasks();
-      if (list.length === 0) {
-        // seed with default tasks if empty
-        for (const task of INITIAL_TASKS) {
-          await ApiClient.saveTask(task);
-        }
-        setTasks(INITIAL_TASKS);
-      } else {
-        setTasks(list);
-      }
+      setTasks(list);
 
       const members = await ApiClient.getTeamMembers();
       setTeamMembers(members);
@@ -262,34 +254,7 @@ export default function App() {
     window.dispatchEvent(new Event('pinobite_activity_update'));
   };
 
-  // Re-populate and activate default sprint items
-  const handleResetDefaultTasks = async () => {
-    const activeAssignee = currentUserMember?.id || currentUser?.email || 'admin_member_default';
-    
-    const seededTasks: Task[] = INITIAL_TASKS.map((t, idx) => ({
-      ...t,
-      id: `task-act-${Date.now()}-${idx}`,
-      assignedTo: Array.from(new Set([...t.assignedTo, activeAssignee, 'admin_member_default'])),
-      createdBy: currentUser?.email || 'admin@pinobite.com'
-    }));
 
-    for (const task of seededTasks) {
-      await ApiClient.saveTask(task);
-    }
-    
-    const existing = await ApiClient.getTasks();
-    const combinedMap = new Map<string, Task>();
-    for (const t of [...seededTasks, ...existing]) {
-      combinedMap.set(t.id, t);
-    }
-    const combined = Array.from(combinedMap.values());
-    setTasks(combined);
-    
-    setToast({
-      title: '⚡ Sprint Tasks Activated',
-      message: 'Active sprint tasks populated successfully!'
-    });
-  };
 
   // Audio feedback generator for completed tasks
   const playCompletionPing = () => {
@@ -1435,7 +1400,7 @@ export default function App() {
                       onToggleSelect={handleToggleSelect}
                       onToggleSelectAll={handleToggleSelectAll}
                       currentUser={currentUser}
-                      onResetDefaultTasks={handleResetDefaultTasks}
+
                       isAdmin={isAdmin}
                     />
                   )}
@@ -1483,7 +1448,7 @@ export default function App() {
                         onToggleSelect={handleToggleSelect}
                         onToggleSelectAll={handleToggleSelectAll}
                         currentUser={currentUser}
-                        onResetDefaultTasks={handleResetDefaultTasks}
+
                         isAdmin={isAdmin}
                       />
                     </div>

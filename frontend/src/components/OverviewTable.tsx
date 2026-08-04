@@ -34,7 +34,7 @@ interface OverviewTableProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   currentUser?: { email: string; name: string } | null;
-  onResetDefaultTasks?: () => void;
+
   isAdmin?: boolean;
 }
 
@@ -49,7 +49,7 @@ export default function OverviewTable({
   onToggleSelect,
   onToggleSelectAll,
   currentUser,
-  onResetDefaultTasks,
+
   isAdmin = true
 }: OverviewTableProps) {
 
@@ -171,14 +171,6 @@ export default function OverviewTable({
                 <Plus className="w-4 h-4" />
                 <span>+ Add Your First Task</span>
               </button>
-              {onResetDefaultTasks && (
-                <button
-                  onClick={onResetDefaultTasks}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
-                >
-                  <span>⚡ Activate Default Sprint Tasks</span>
-                </button>
-              )}
             </div>
           </div>
         ) : (
@@ -360,14 +352,6 @@ export default function OverviewTable({
                     <Plus className="w-4 h-4" />
                     <span>Add Your First Task</span>
                   </button>
-                  {onResetDefaultTasks && (
-                    <button
-                      onClick={onResetDefaultTasks}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-                    >
-                      <span>⚡ Activate Default Sprint Tasks</span>
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (

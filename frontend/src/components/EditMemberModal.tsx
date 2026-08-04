@@ -28,7 +28,7 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
   const [password, setPassword] = useState(member.password || 'Password123!');
   const [role, setRole] = useState(member.role || 'Team Member');
   const [team, setTeam] = useState(member.team || 'Engineering');
-  const [accessLevel, setAccessLevel] = useState<'Super Admin' | 'Admin' | 'Member' | 'Viewer'>(member.accessLevel || 'Member');
+  const [accessLevel, setAccessLevel] = useState<'Super Admin' | 'Member'>(member.accessLevel || 'Member');
   const [color, setColor] = useState(member.color || 'indigo');
   const [onboardingStatus, setOnboardingStatus] = useState<'Completed' | 'In Progress' | 'Invited'>(member.onboardingStatus || 'Completed');
   const [skillsInput, setSkillsInput] = useState((member.skills || []).join(', '));
@@ -202,9 +202,7 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
                 className={`w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:border-indigo-500 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <option value="Super Admin">👑 Super Admin (Owner Access)</option>
-                <option value="Admin">⚡ Admin (Full System Access)</option>
                 <option value="Member">👤 Member (Standard Access)</option>
-                <option value="Viewer">👁️ Viewer (Read Only)</option>
               </select>
               {!isAdmin && <span className="text-[10px] text-amber-500 block font-medium">Only workspace administrators can change permissions.</span>}
             </div>

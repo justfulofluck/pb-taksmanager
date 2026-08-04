@@ -16,7 +16,7 @@ export const DEFAULT_ADMIN_MEMBER: TeamMember = {
   password: 'Password123!',
   role: 'Lead Administrator & Workspace Owner',
   team: 'Engineering',
-  accessLevel: 'Admin',
+  accessLevel: 'Super Admin',
   avatarChar: 'A',
   color: 'indigo',
   onboardingStatus: 'Completed',

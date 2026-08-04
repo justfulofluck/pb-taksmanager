@@ -13,7 +13,7 @@ export interface TeamMember {
   email: string;
   role?: string;
   team?: string; // e.g., 'Engineering', 'Marketing', 'Design & UX', 'Operations', 'Product'
-  accessLevel?: 'Super Admin' | 'Admin' | 'Member' | 'Viewer';
+  accessLevel?: 'Super Admin' | 'Member';
   onboardingStatus?: 'Invited' | 'In Progress' | 'Completed';
   joinedDate?: string;
   skills?: string[];

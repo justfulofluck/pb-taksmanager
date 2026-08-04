@@ -60,7 +60,7 @@ export default function AdminPanelView({
   
   // User Management State
   const [userSearch, setUserSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | 'Super Admin' | 'Admin' | 'Member' | 'Viewer'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'Super Admin' | 'Member'>('ALL');
   const [teamFilter, setTeamFilter] = useState<string>('ALL');
   
   // Audit Logs State
@@ -125,9 +125,9 @@ export default function AdminPanelView({
 
   // Metrics
   const totalUsers = teamMembers.length;
-  const adminCount = teamMembers.filter(m => m.accessLevel === 'Admin' || m.accessLevel === 'Super Admin').length;
+  const adminCount = teamMembers.filter(m => m.accessLevel === 'Super Admin').length;
   const memberCount = teamMembers.filter(m => m.accessLevel === 'Member' || !m.accessLevel).length;
-  const viewerCount = teamMembers.filter(m => m.accessLevel === 'Viewer').length;
+
 
   // Filtered Members
   const filteredMembers = teamMembers.filter(member => {
@@ -143,7 +143,7 @@ export default function AdminPanelView({
   });
 
   // Role Change Handler
-  const handleRoleChange = async (member: TeamMember, newLevel: 'Super Admin' | 'Admin' | 'Member' | 'Viewer') => {
+  const handleRoleChange = async (member: TeamMember, newLevel: 'Super Admin' | 'Member') => {
     const updated = { ...member, accessLevel: newLevel };
     await ApiClient.saveTeamMember(updated);
     const refreshed = await ApiClient.getTeamMembers();
@@ -269,12 +269,7 @@ export default function AdminPanelView({
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               onClick={() => {
-                const adminUser = teamMembers.find(m => 
-                  m.email === currentUser?.email || 
-                  m.accessLevel === 'Admin' || 
-                  m.accessLevel === 'Super Admin' ||
-                  m.email === 'admin@pinobite.com'
-                ) || teamMembers[0] || DEFAULT_ADMIN_MEMBER;
+                const adminUser = teamMembers.find(m => m.email === 'admin@pinobite.com') || teamMembers[0] || DEFAULT_ADMIN_MEMBER;
                 
                 setEditingMember(adminUser);
               }}
@@ -390,7 +385,7 @@ export default function AdminPanelView({
               {/* Role Filter */}
               <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
                 <span className="text-slate-400 px-2">Access:</span>
-                {(['ALL', 'Super Admin', 'Admin', 'Member', 'Viewer'] as const).map(role => (
+                {(['ALL', 'Super Admin', 'Member'] as const).map(role => (
                   <button
                     key={role}
                     onClick={() => setRoleFilter(role)}
@@ -435,6 +430,9 @@ export default function AdminPanelView({
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                   {filteredMembers.map((member) => {
                     const currentLevel = member.accessLevel || 'Member';
+                    const badgeClass = currentLevel === 'Super Admin'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400'
+                      : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
                     return (
                       <tr key={member.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="py-4 px-5">
@@ -471,20 +469,10 @@ export default function AdminPanelView({
                             <select
                               value={currentLevel}
                               onChange={(e) => handleRoleChange(member, e.target.value as any)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer border focus:outline-none ${
-                                currentLevel === 'Super Admin'
-                                  ? 'bg-violet-50 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-900'
-                                  : currentLevel === 'Admin'
-                                  ? 'bg-rose-50 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900'
-                                  : currentLevel === 'Member'
-                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                              }`}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer border focus:outline-none ${badgeClass} border-slate-200 dark:border-slate-700`}
                             >
                               <option value="Super Admin">👑 Super Admin</option>
-                              <option value="Admin">⚡ Admin</option>
                               <option value="Member">👤 Member</option>
-                              <option value="Viewer">👁️ Viewer</option>
                             </select>
                           </div>
                         </td>

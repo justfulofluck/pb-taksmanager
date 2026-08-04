@@ -11,7 +11,7 @@ CREATE TABLE team_members (
     password VARCHAR(255),
     role VARCHAR(255),
     department VARCHAR(255),
-    access_level VARCHAR(20) DEFAULT 'Member', -- Admin, Member, Viewer
+    access_level VARCHAR(20) DEFAULT 'Member', -- Super Admin, Member
     avatar_char CHAR(1),
     color VARCHAR(50),
     onboarding_status VARCHAR(20) DEFAULT 'Invited', -- Invited, In Progress, Completed

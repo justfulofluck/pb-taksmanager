@@ -6,19 +6,15 @@ from contextlib import asynccontextmanager
 
 from database import engine, Base, get_db
 import models, schemas, crud, email_service
-from seed_data import seed_database
+
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize SQLite tables
     Base.metadata.create_all(bind=engine)
-    # Seed initial workspace data
-    db = next(get_db())
-    try:
-        seed_database(db)
-    finally:
-        db.close()
+
+
     yield
 
 app = FastAPI(
