@@ -95,7 +95,10 @@ export default function App() {
       });
     }
 
-    const isMarketingTeam = currentUserMember?.team === 'Marketing';
+    const memberTeams = currentUserMember?.teams?.length
+      ? currentUserMember.teams
+      : (currentUserMember?.team ? [currentUserMember.team] : []);
+    const isMarketingTeam = memberTeams.includes('Marketing');
     if (!isAdmin && !isMarketingTeam && currentView === 'social_media') {
       setCurrentView('overview');
       setToast({
@@ -780,7 +783,7 @@ export default function App() {
               { id: 'analytics', label: 'Analytics & Metrics', icon: BarChart3 },
               { id: 'due', label: 'Due / Critical Items', icon: Activity, count: tasks.filter(t => t.priority === 'High Priority').length, badgeColor: 'rose' },
               ...(isAdmin ? [{ id: 'team_onboarding', label: 'Team & Onboarding', icon: Users, count: teamMembers.length, badgeColor: 'emerald', iconColor: 'text-emerald-500' }] : []),
-              ...((isAdmin || currentUserMember?.team === 'Marketing') ? [{ id: 'social_media', label: 'Social Marketing', icon: Share2, textBadge: 'NEW', badgeColor: 'purple', iconColor: 'text-purple-500' }] : []),
+              ...((isAdmin || (currentUserMember?.teams?.includes('Marketing') || currentUserMember?.team === 'Marketing')) ? [{ id: 'social_media', label: 'Social Marketing', icon: Share2, textBadge: 'NEW', badgeColor: 'purple', iconColor: 'text-purple-500' }] : []),
               { id: 'inbox', label: 'Inbox & Activity Logs', icon: Inbox, dot: true }
             ].map((item) => {
 

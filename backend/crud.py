@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import delete
 from typing import List, Optional
+from datetime import datetime
 import models, schemas
 from security import hash_password, verify_password, is_bcrypt_hash
 
@@ -104,12 +105,16 @@ def get_all_team_members(db: Session) -> List[schemas.TeamMemberSchema]:
             schemas.OnboardingChecklistItemSchema(id=c.id, title=c.title, completed=c.completed)
             for c in m.checklist_items
         ]
+        member_teams = [t.team for t in m.teams]
+        if not member_teams and m.department:
+            member_teams = [m.department]
         results.append(schemas.TeamMemberSchema(
             id=m.id,
             name=m.name,
             email=m.email,
             role=m.role or "",
             team=m.department or "",
+            teams=member_teams,
             accessLevel=m.access_level or "Member",
             onboardingStatus=m.onboarding_status or "Invited",
             joinedDate=m.joined_date or "",
@@ -127,7 +132,30 @@ def get_all_team_members(db: Session) -> List[schemas.TeamMemberSchema]:
     return results
 
 
+def upsert_auth_for_member(db: Session, member_data: schemas.TeamMemberSchema) -> None:
+    """Ensure a member also has a backend login account (user_auth)."""
+    if not member_data.password:
+        return
+    email_key = member_data.email.lower().strip()
+    if not email_key:
+        return
+    user = db.query(models.UserAuthDB).filter(models.UserAuthDB.email == email_key).first()
+    if user:
+        if user.name != member_data.name:
+            user.name = member_data.name
+            db.commit()
+        return
+    db.add(models.UserAuthDB(
+        email=email_key,
+        name=member_data.name,
+        password=hash_password(member_data.password)
+    ))
+    db.commit()
+
+
 def save_team_member(db: Session, member_data: schemas.TeamMemberSchema) -> schemas.TeamMemberSchema:
+    upsert_auth_for_member(db, member_data)
+
     existing = db.query(models.TeamMemberDB).filter(models.TeamMemberDB.id == member_data.id).first()
     if existing:
         db.delete(existing)
@@ -158,6 +186,12 @@ def save_team_member(db: Session, member_data: schemas.TeamMemberSchema) -> sche
         for sk in member_data.skills:
             db.add(models.MemberSkillDB(member_id=member_data.id, skill=sk))
 
+    member_teams = list(dict.fromkeys([t for t in (member_data.teams or []) if t]))
+    if member_data.team and member_data.team not in member_teams:
+        member_teams.insert(0, member_data.team)
+    for t in member_teams:
+        db.add(models.MemberTeamDB(member_id=member_data.id, team=t))
+
     if member_data.onboardingChecklist:
         for cl in member_data.onboardingChecklist:
             db.add(models.OnboardingChecklistDB(id=cl.id, member_id=member_data.id, title=cl.title, completed=cl.completed))
@@ -169,8 +203,12 @@ def save_team_member(db: Session, member_data: schemas.TeamMemberSchema) -> sche
 def delete_team_member(db: Session, member_id: str) -> bool:
     existing = db.query(models.TeamMemberDB).filter(models.TeamMemberDB.id == member_id).first()
     if existing:
+        email_key = (existing.email or "").lower().strip()
         db.delete(existing)
         db.commit()
+        if email_key:
+            db.query(models.UserAuthDB).filter(models.UserAuthDB.email == email_key).delete()
+            db.commit()
         return True
     return False
 
@@ -272,6 +310,26 @@ def register_user(db: Session, payload: schemas.UserRegisterSchema) -> schemas.U
     )
     db.add(db_user)
     db.commit()
+
+    # Also create a team member entry so signups appear in the team panel
+    member = db.query(models.TeamMemberDB).filter(models.TeamMemberDB.email == email_key).first()
+    if not member:
+        member_id = email_key.replace("@", "-").replace(".", "-")
+        db.add(models.TeamMemberDB(
+            id=member_id,
+            name=payload.name,
+            email=email_key,
+            password=payload.password,
+            role="Team Member",
+            department="Engineering",
+            access_level="Member",
+            avatar_char=(payload.name[:1].upper() if payload.name else "U"),
+            color="bg-indigo-600",
+            onboarding_status="Completed",
+            joined_date=datetime.utcnow().strftime("%Y-%m-%d")
+        ))
+        db.commit()
+
     return schemas.UserAuthResponseSchema(email=payload.email, name=payload.name)
 
 

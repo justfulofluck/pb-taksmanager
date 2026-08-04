@@ -130,6 +130,11 @@ export default function AdminPanelView({
 
 
   // Filtered Members
+  const getMemberTeams = (member: TeamMember): string[] => {
+    if (member.teams && member.teams.length) return member.teams;
+    return member.team ? [member.team] : [];
+  };
+
   const filteredMembers = teamMembers.filter(member => {
     const matchesSearch = 
       member.name.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -137,7 +142,7 @@ export default function AdminPanelView({
       (member.role && member.role.toLowerCase().includes(userSearch.toLowerCase()));
     
     const matchesRole = roleFilter === 'ALL' || (member.accessLevel || 'Member') === roleFilter;
-    const matchesTeam = teamFilter === 'ALL' || member.team === teamFilter;
+    const matchesTeam = teamFilter === 'ALL' || getMemberTeams(member).includes(teamFilter);
 
     return matchesSearch && matchesRole && matchesTeam;
   });
@@ -158,14 +163,6 @@ export default function AdminPanelView({
       timestamp: new Date().toISOString()
     });
     fetchLogs();
-  };
-
-  // Team Change Handler
-  const handleTeamChange = async (member: TeamMember, newTeam: string) => {
-    const updated = { ...member, team: newTeam };
-    await ApiClient.saveTeamMember(updated);
-    const refreshed = await ApiClient.getTeamMembers();
-    onUpdateTeamMembers(refreshed);
   };
 
   // Password Reset Handler
@@ -453,15 +450,13 @@ export default function AdminPanelView({
                         </td>
 
                         <td className="py-4 px-4">
-                          <select
-                            value={member.team || 'Engineering'}
-                            onChange={(e) => handleTeamChange(member, e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer focus:outline-none focus:border-indigo-500"
-                          >
-                            {AVAILABLE_TEAMS.map(team => (
-                              <option key={team} value={team}>{team}</option>
+                          <div className="flex flex-wrap gap-1">
+                            {getMemberTeams(member).map(t => (
+                              <span key={t} className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold border border-indigo-100 dark:border-indigo-900">
+                                {t}
+                              </span>
                             ))}
-                          </select>
+                          </div>
                         </td>
 
                         <td className="py-4 px-4">

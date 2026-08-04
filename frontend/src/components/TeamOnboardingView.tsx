@@ -62,16 +62,22 @@ export default function TeamOnboardingView({
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
 
   // Filtered members
+  const getMemberTeams = (member: TeamMember): string[] => {
+    if (member.teams && member.teams.length) return member.teams;
+    return member.team ? [member.team] : [];
+  };
+
   const filteredMembers = teamMembers.filter((member) => {
     // Search filter
+    const memberTeams = getMemberTeams(member).join(' ').toLowerCase();
     const matchesSearch = 
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.role && member.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (member.team && member.team.toLowerCase().includes(searchQuery.toLowerCase()));
+      memberTeams.includes(searchQuery.toLowerCase());
 
     // Team filter
-    const matchesTeam = selectedTeam === 'ALL' || member.team === selectedTeam;
+    const matchesTeam = selectedTeam === 'ALL' || getMemberTeams(member).includes(selectedTeam);
 
     // Status filter
     const matchesStatus = selectedStatus === 'ALL' || member.onboardingStatus === selectedStatus;
@@ -85,7 +91,7 @@ export default function TeamOnboardingView({
   const inProgressOnboardings = teamMembers.filter(m => m.onboardingStatus === 'In Progress').length;
   const invitedMembers = teamMembers.filter(m => m.onboardingStatus === 'Invited').length;
 
-  const uniqueTeamsCount = Array.from(new Set(teamMembers.map(m => m.team).filter(Boolean))).length;
+  const uniqueTeamsCount = Array.from(new Set(teamMembers.flatMap(m => getMemberTeams(m)))).length;
   const completionRate = totalMembers > 0 ? Math.round((completedOnboardings / totalMembers) * 100) : 100;
 
   // Toggle checklist item inside active member drawer
@@ -414,8 +420,6 @@ export default function TeamOnboardingView({
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${
                         member.accessLevel === 'Super Admin'
                           ? 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-900'
-                          : member.accessLevel === 'Admin'
-                          ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-900'
                           : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                       }`}>
                         {member.accessLevel || 'Member'}
@@ -425,7 +429,7 @@ export default function TeamOnboardingView({
                     {/* Role & Team Badges */}
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-[11px] font-extrabold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
-                        {member.team || 'General Team'}
+                        {getMemberTeams(member).join(', ') || 'General Team'}
                       </span>
                       {member.role && (
                         <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
@@ -561,7 +565,7 @@ export default function TeamOnboardingView({
                           </div>
                         </td>
                         <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">
-                          {member.team || 'General Team'}
+                          {getMemberTeams(member).join(', ') || 'General Team'}
                         </td>
                         <td className="p-4 font-semibold text-slate-700 dark:text-slate-300">
                           {member.role || 'Team Member'}
@@ -658,7 +662,7 @@ export default function TeamOnboardingView({
                     {activeChecklistMember.name}'s Onboarding Roadmap
                   </h3>
                   <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">
-                    Team: {activeChecklistMember.team} • {activeChecklistMember.role}
+                    Team: {getMemberTeams(activeChecklistMember).join(', ') || 'General Team'} • {activeChecklistMember.role}
                   </span>
                 </div>
               </div>

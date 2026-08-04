@@ -12,7 +12,8 @@ export interface TeamMember {
   name: string;
   email: string;
   role?: string;
-  team?: string; // e.g., 'Engineering', 'Marketing', 'Design & UX', 'Operations', 'Product'
+  team?: string; // primary team e.g., 'Engineering', 'Marketing', 'Design & UX', 'Operations', 'Product'
+  teams?: string[]; // multi-team / department assignment
   accessLevel?: 'Super Admin' | 'Member';
   onboardingStatus?: 'Invited' | 'In Progress' | 'Completed';
   joinedDate?: string;

@@ -55,6 +55,7 @@ class TeamMemberSchema(BaseModel):
     email: str
     role: Optional[str] = ""
     team: Optional[str] = ""
+    teams: Optional[List[str]] = []
     accessLevel: Optional[str] = Field(default="Member", alias="access_level")
     onboardingStatus: Optional[str] = Field(default="Invited", alias="onboarding_status")
     joinedDate: Optional[str] = Field(default="", alias="joined_date")

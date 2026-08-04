@@ -25,6 +25,16 @@ class TeamMemberDB(Base):
 
     skills = relationship("MemberSkillDB", back_populates="member", cascade="all, delete-orphan")
     checklist_items = relationship("OnboardingChecklistDB", back_populates="member", cascade="all, delete-orphan")
+    teams = relationship("MemberTeamDB", back_populates="member", cascade="all, delete-orphan")
+
+
+class MemberTeamDB(Base):
+    __tablename__ = "member_teams"
+
+    member_id = Column(String(50), ForeignKey("team_members.id", ondelete="CASCADE"), primary_key=True)
+    team = Column(String(100), primary_key=True)
+
+    member = relationship("TeamMemberDB", back_populates="teams")
 
 
 class MemberSkillDB(Base):

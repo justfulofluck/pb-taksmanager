@@ -27,7 +27,10 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
   const [email, setEmail] = useState(member.email);
   const [password, setPassword] = useState(member.password || 'Password123!');
   const [role, setRole] = useState(member.role || 'Team Member');
-  const [team, setTeam] = useState(member.team || 'Engineering');
+  const [selectedTeams, setSelectedTeams] = useState<string[]>(
+    member.teams?.length ? member.teams : (member.team ? [member.team] : ['Engineering'])
+  );
+  const [customTeam, setCustomTeam] = useState('');
   const [accessLevel, setAccessLevel] = useState<'Super Admin' | 'Member'>(member.accessLevel || 'Member');
   const [color, setColor] = useState(member.color || 'indigo');
   const [onboardingStatus, setOnboardingStatus] = useState<'Completed' | 'In Progress' | 'Invited'>(member.onboardingStatus || 'Completed');
@@ -35,6 +38,18 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const toggleTeam = (t: string) => {
+    setSelectedTeams(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
+
+  const addCustomTeam = () => {
+    const t = customTeam.trim();
+    if (t && !selectedTeams.includes(t)) {
+      setSelectedTeams(prev => [...prev, t]);
+    }
+    setCustomTeam('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +74,8 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
         email: email.trim().toLowerCase(),
         password: password.trim() || 'Password123!',
         role: role.trim(),
-        team,
+        team: selectedTeams[0] || 'Engineering',
+        teams: selectedTeams,
         accessLevel,
         color,
         onboardingStatus,
@@ -178,19 +194,58 @@ export default function EditMemberModal({ member, onClose, onSave, onDelete, isA
             />
           </div>
 
-          {/* Grid: Department & Access Level */}
+          {/* Grid: Departments & Access Level */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Department / Team</label>
-              <select
-                value={team}
-                onChange={(e) => setTeam(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
-              >
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Departments / Teams</label>
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {AVAILABLE_TEAMS.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTeam(t)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      selectedTeams.includes(t)
+                        ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+                        : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {t}
+                  </button>
                 ))}
-              </select>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customTeam}
+                  onChange={(e) => setCustomTeam(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTeam();
+                    }
+                  }}
+                  placeholder="Add custom team..."
+                  className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomTeam}
+                  className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Add
+                </button>
+              </div>
+              {selectedTeams.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedTeams.map(t => (
+                    <span key={t} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
+                      {t}
+                      <button type="button" onClick={() => toggleTeam(t)} className="hover:text-rose-500 transition-colors">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">

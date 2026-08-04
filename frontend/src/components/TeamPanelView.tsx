@@ -72,13 +72,18 @@ export default function TeamPanelView({
   const [newPostText, setNewPostText] = useState('');
 
   // Filtered members by team department & search
+  const getMemberTeams = (member: TeamMember): string[] => {
+    if (member.teams && member.teams.length) return member.teams;
+    return member.team ? [member.team] : [];
+  };
+
   const filteredMembers = teamMembers.filter(member => {
     const matchesSearch = 
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.role && member.role.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesTeam = selectedTeam === 'ALL' || member.team === selectedTeam;
+    const matchesTeam = selectedTeam === 'ALL' || getMemberTeams(member).includes(selectedTeam);
 
     return matchesSearch && matchesTeam;
   });
@@ -199,7 +204,7 @@ export default function TeamPanelView({
           All Departments ({teamMembers.length})
         </button>
         {AVAILABLE_TEAMS.map(team => {
-          const count = teamMembers.filter(m => m.team === team).length;
+          const count = teamMembers.filter(m => getMemberTeams(m).includes(team)).length;
           return (
             <button
               key={team}

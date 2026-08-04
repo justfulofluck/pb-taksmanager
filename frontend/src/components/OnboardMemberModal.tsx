@@ -42,7 +42,7 @@ export default function OnboardMemberModal({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
-  const [team, setTeam] = useState(initialTeam || AVAILABLE_TEAMS[0]);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([initialTeam || AVAILABLE_TEAMS[0]]);
   const [customTeam, setCustomTeam] = useState('');
   const [accessLevel, setAccessLevel] = useState<'Super Admin' | 'Member'>('Member');
   const [color, setColor] = useState(AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]);
@@ -76,6 +76,18 @@ export default function OnboardMemberModal({
     setSkills(skills.filter(s => s !== skillToRemove));
   };
 
+  const toggleTeam = (t: string) => {
+    setSelectedTeams(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
+
+  const addCustomTeam = () => {
+    const t = customTeam.trim();
+    if (t && !selectedTeams.includes(t)) {
+      setSelectedTeams(prev => [...prev, t]);
+    }
+    setCustomTeam('');
+  };
+
   const toggleChecklistItem = (id: string) => {
     setChecklist(prev => prev.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
   };
@@ -84,7 +96,8 @@ export default function OnboardMemberModal({
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
 
-    const finalTeam = team === 'CUSTOM' ? (customTeam.trim() || 'General Team') : team;
+    const finalTeams = selectedTeams.length ? selectedTeams : [AVAILABLE_TEAMS[0]];
+    const finalTeam = finalTeams[0];
     const memberId = name.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20) + `-${Date.now().toString().slice(-4)}`;
     
     // Check completed count
@@ -101,6 +114,7 @@ export default function OnboardMemberModal({
       email: email.trim().toLowerCase(),
       role: role.trim() || 'Team Member',
       team: finalTeam,
+      teams: finalTeams,
       accessLevel,
       onboardingStatus: status,
       joinedDate: new Date().toISOString().split('T')[0],
@@ -250,45 +264,61 @@ export default function OnboardMemberModal({
               {/* Team / Department Selection */}
               <div className="space-y-1">
                 <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
-                  Assign to Team / Department <span className="text-rose-500">*</span>
+                  Assign to Teams / Departments <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {AVAILABLE_TEAMS.map((t) => (
                     <button
                       key={t}
                       type="button"
-                      onClick={() => setTeam(t)}
+                      onClick={() => toggleTeam(t)}
                       className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-between ${
-                        team === t
+                        selectedTeams.includes(t)
                           ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 shadow-xs'
                           : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                       }`}
                     >
                       <span className="truncate">{t}</span>
-                      {team === t && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                      {selectedTeams.includes(t) && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setTeam('CUSTOM')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                      team === 'CUSTOM'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 shadow-xs'
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    + Custom Team
-                  </button>
                 </div>
-                {team === 'CUSTOM' && (
+                <div className="flex gap-2 pt-1">
                   <input
                     type="text"
-                    required
-                    placeholder="Enter custom team name (e.g. AI Research & Data)"
+                    placeholder="Add custom team (e.g. AI Research & Data)"
                     value={customTeam}
                     onChange={(e) => setCustomTeam(e.target.value)}
-                    className="w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCustomTeam();
+                      }
+                    }}
+                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-500"
                   />
+                  <button
+                    type="button"
+                    onClick={addCustomTeam}
+                    className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer shrink-0"
+                  >
+                    + Add
+                  </button>
+                </div>
+                {selectedTeams.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedTeams.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900"
+                      >
+                        {t}
+                        <button type="button" onClick={() => toggleTeam(t)} className="hover:text-rose-500 transition-colors">
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -487,7 +517,7 @@ export default function OnboardMemberModal({
               <div className="space-y-1">
                 <h3 className="text-lg font-black text-slate-900 dark:text-white">Onboarding Complete & Credentials Ready! 🎉</h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{createdMember?.name}</span> is onboarded into <span className="font-bold text-indigo-600">{createdMember?.team}</span>. Below are the generated login credentials for their dashboard.
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{createdMember?.name}</span> is onboarded into <span className="font-bold text-indigo-600">{createdMember?.teams?.join(', ') || createdMember?.team}</span>. Below are the generated login credentials for their dashboard.
                 </p>
               </div>
 
@@ -498,7 +528,7 @@ export default function OnboardMemberModal({
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(`Email: ${createdMember?.email}\nPassword: ${createdMember?.password}\nTeam: ${createdMember?.team}`);
+                      navigator.clipboard.writeText(`Email: ${createdMember?.email}\nPassword: ${createdMember?.password}\nTeam: ${createdMember?.teams?.join(', ') || createdMember?.team}`);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
@@ -511,7 +541,7 @@ export default function OnboardMemberModal({
                   <div><span className="text-slate-500 font-sans">Full Name:</span> <span className="text-white font-bold">{createdMember?.name}</span></div>
                   <div><span className="text-slate-500 font-sans">Email:</span> <span className="text-emerald-400 font-bold">{createdMember?.email}</span></div>
                   <div><span className="text-slate-500 font-sans">Password:</span> <span className="text-amber-300 font-bold">{createdMember?.password}</span></div>
-                  <div><span className="text-slate-500 font-sans">Department:</span> <span className="text-indigo-300 font-bold">{createdMember?.team} ({createdMember?.role})</span></div>
+                  <div><span className="text-slate-500 font-sans">Department:</span> <span className="text-indigo-300 font-bold">{createdMember?.teams?.join(', ') || createdMember?.team} ({createdMember?.role})</span></div>
                 </div>
               </div>
 
