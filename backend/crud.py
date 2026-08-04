@@ -194,7 +194,10 @@ def save_team_member(db: Session, member_data: schemas.TeamMemberSchema) -> sche
 
     if member_data.onboardingChecklist:
         for cl in member_data.onboardingChecklist:
-            db.add(models.OnboardingChecklistDB(id=cl.id, member_id=member_data.id, title=cl.title, completed=cl.completed))
+            # checklist ids from the UI are fixed ("ob-1"...) and would collide across
+            # members (id is a primary key), so namespace them per member.
+            cid = cl.id if cl.id.startswith(f"{member_data.id}:") else f"{member_data.id}:{cl.id}"
+            db.add(models.OnboardingChecklistDB(id=cid, member_id=member_data.id, title=cl.title, completed=cl.completed))
 
     db.commit()
     return member_data
