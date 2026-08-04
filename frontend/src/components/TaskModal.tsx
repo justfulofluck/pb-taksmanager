@@ -82,7 +82,7 @@ export default function TaskModal({ task, onClose, onUpdate, onDelete, currentUs
   // Auto-save changes on field changes
   useEffect(() => {
     handleSave();
-  }, [title, description, status, priority, dueDate, selectedTags, assignedTo, attachments]);
+  }, [title, description, status, priority, dueDate, selectedTags, assignedTo, attachments, subtasks]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
