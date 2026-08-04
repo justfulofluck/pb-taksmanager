@@ -82,7 +82,7 @@ export default function App() {
   );
 
   const isAdmin = currentUserMember 
-    ? (currentUserMember.accessLevel === 'Admin' || currentUserMember.email === 'admin@pinobite.com')
+    ? (currentUserMember.accessLevel === 'Admin' || currentUserMember.accessLevel === 'Super Admin' || currentUserMember.email === 'admin@pinobite.com')
     : (currentUser?.email === 'admin@pinobite.com');
 
   // Guard restricted views for non-admins & specific team roles

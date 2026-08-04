@@ -55,11 +55,11 @@ def health_check():
 # TASKS ENDPOINTS
 # =========================================================================
 
-@app.get("/api/tasks", response_model=List[schemas.TaskSchema])
+@app.get("/api/tasks", response_model=List[schemas.TaskSchema], response_model_by_alias=False)
 def get_tasks(db: Session = Depends(get_db)):
     return crud.get_all_tasks(db)
 
-@app.post("/api/tasks", response_model=schemas.TaskSchema, status_code=status.HTTP_201_CREATED)
+@app.post("/api/tasks", response_model=schemas.TaskSchema, status_code=status.HTTP_201_CREATED, response_model_by_alias=False)
 def save_task(task: schemas.TaskSchema, db: Session = Depends(get_db)):
     return crud.save_task(db, task)
 
@@ -79,14 +79,14 @@ def bulk_delete_tasks(task_ids: List[str], db: Session = Depends(get_db)):
 # AUTHENTICATION ENDPOINTS
 # =========================================================================
 
-@app.post("/api/auth/register", response_model=schemas.UserAuthResponseSchema)
+@app.post("/api/auth/register", response_model=schemas.UserAuthResponseSchema, response_model_by_alias=False)
 def register(user: schemas.UserRegisterSchema, db: Session = Depends(get_db)):
     try:
         return crud.register_user(db, user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/auth/login", response_model=schemas.UserAuthResponseSchema)
+@app.post("/api/auth/login", response_model=schemas.UserAuthResponseSchema, response_model_by_alias=False)
 def login(credentials: schemas.UserLoginSchema, db: Session = Depends(get_db)):
     try:
         return crud.login_user(db, credentials)
@@ -97,11 +97,11 @@ def login(credentials: schemas.UserLoginSchema, db: Session = Depends(get_db)):
 # COMMENTS ENDPOINTS
 # =========================================================================
 
-@app.get("/api/comments", response_model=List[schemas.CommentSchema])
+@app.get("/api/comments", response_model=List[schemas.CommentSchema], response_model_by_alias=False)
 def get_comments(task_id: Optional[str] = None, db: Session = Depends(get_db)):
     return crud.get_comments(db, task_id)
 
-@app.post("/api/comments", response_model=schemas.CommentSchema, status_code=status.HTTP_201_CREATED)
+@app.post("/api/comments", response_model=schemas.CommentSchema, status_code=status.HTTP_201_CREATED, response_model_by_alias=False)
 def add_comment(comment: schemas.CommentSchema, db: Session = Depends(get_db)):
     return crud.save_comment(db, comment)
 
@@ -109,11 +109,11 @@ def add_comment(comment: schemas.CommentSchema, db: Session = Depends(get_db)):
 # ACTIVITY LOGS ENDPOINTS
 # =========================================================================
 
-@app.get("/api/activity-logs", response_model=List[schemas.ActivityLogSchema])
+@app.get("/api/activity-logs", response_model=List[schemas.ActivityLogSchema], response_model_by_alias=False)
 def get_activity_logs(db: Session = Depends(get_db)):
     return crud.get_activity_logs(db)
 
-@app.post("/api/activity-logs", response_model=schemas.ActivityLogSchema, status_code=status.HTTP_201_CREATED)
+@app.post("/api/activity-logs", response_model=schemas.ActivityLogSchema, status_code=status.HTTP_201_CREATED, response_model_by_alias=False)
 def add_activity_log(log: schemas.ActivityLogSchema, db: Session = Depends(get_db)):
     return crud.add_activity_log(db, log)
 
@@ -121,11 +121,11 @@ def add_activity_log(log: schemas.ActivityLogSchema, db: Session = Depends(get_d
 # TEAM MEMBERS ENDPOINTS
 # =========================================================================
 
-@app.get("/api/team-members", response_model=List[schemas.TeamMemberSchema])
+@app.get("/api/team-members", response_model=List[schemas.TeamMemberSchema], response_model_by_alias=False)
 def get_team_members(db: Session = Depends(get_db)):
     return crud.get_all_team_members(db)
 
-@app.post("/api/team-members", response_model=schemas.TeamMemberSchema, status_code=status.HTTP_201_CREATED)
+@app.post("/api/team-members", response_model=schemas.TeamMemberSchema, status_code=status.HTTP_201_CREATED, response_model_by_alias=False)
 def save_team_member(member: schemas.TeamMemberSchema, db: Session = Depends(get_db)):
     return crud.save_team_member(db, member)
 
@@ -140,11 +140,11 @@ def delete_team_member(member_id: str, db: Session = Depends(get_db)):
 # SOCIAL MEDIA POSTS ENDPOINTS
 # =========================================================================
 
-@app.get("/api/social-posts", response_model=List[schemas.SocialMediaPostSchema])
+@app.get("/api/social-posts", response_model=List[schemas.SocialMediaPostSchema], response_model_by_alias=False)
 def get_social_posts(db: Session = Depends(get_db)):
     return crud.get_social_posts(db)
 
-@app.post("/api/social-posts", response_model=schemas.SocialMediaPostSchema, status_code=status.HTTP_201_CREATED)
+@app.post("/api/social-posts", response_model=schemas.SocialMediaPostSchema, status_code=status.HTTP_201_CREATED, response_model_by_alias=False)
 def save_social_post(post: schemas.SocialMediaPostSchema, db: Session = Depends(get_db)):
     return crud.save_social_post(db, post)
 
@@ -200,4 +200,4 @@ def send_onboarding_email(payload: InviteMemberEmailRequest):
 if __name__ == "__main__":
 
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

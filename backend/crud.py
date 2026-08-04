@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import delete
 from typing import List, Optional
 import models, schemas
+from security import hash_password, verify_password, is_bcrypt_hash
 
 # =========================================================================
 # TASK CRUD OPERATIONS
@@ -265,7 +266,7 @@ def register_user(db: Session, payload: schemas.UserRegisterSchema) -> schemas.U
     db_user = models.UserAuthDB(
         email=email_key,
         name=payload.name,
-        password=payload.password,
+        password=hash_password(payload.password),
         security_question=payload.securityQuestion,
         security_answer=payload.securityAnswer
     )
@@ -277,8 +278,12 @@ def register_user(db: Session, payload: schemas.UserRegisterSchema) -> schemas.U
 def login_user(db: Session, payload: schemas.UserLoginSchema) -> schemas.UserAuthResponseSchema:
     email_key = payload.email.lower().strip()
     user = db.query(models.UserAuthDB).filter(models.UserAuthDB.email == email_key).first()
-    if not user or user.password != payload.password:
+    if not user or not verify_password(payload.password, user.password):
         raise ValueError("Invalid email or password")
+    # Lazily upgrade legacy plaintext passwords to hashes
+    if not is_bcrypt_hash(user.password):
+        user.password = hash_password(payload.password)
+        db.commit()
     return schemas.UserAuthResponseSchema(email=user.email, name=user.name)
 
 

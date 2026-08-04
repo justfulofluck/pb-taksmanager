@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 import models, crud, schemas
+from security import hash_password
 
 def seed_database(db: Session):
     # 1. Seed Admin User into user_auth
@@ -8,7 +9,7 @@ def seed_database(db: Session):
         admin_user = models.UserAuthDB(
             email="admin@pinobite.com",
             name="Workspace Admin",
-            password="Password123!",
+            password=hash_password("Password123!"),
             security_question="What was the name of your first pet?",
             security_answer="buddy"
         )
@@ -21,7 +22,7 @@ def seed_database(db: Session):
         dev_user = models.UserAuthDB(
             email="developer@pinobite.com",
             name="Alex Morgan",
-            password="DevPass2026!",
+            password=hash_password("DevPass2026!"),
             security_question="What was your first car?",
             security_answer="tesla"
         )
@@ -34,11 +35,24 @@ def seed_database(db: Session):
         mkt_user = models.UserAuthDB(
             email="marketing@pinobite.com",
             name="Sarah Chen",
-            password="Marketing123!",
+            password=hash_password("Marketing123!"),
             security_question="What city were you born in?",
             security_answer="tokyo"
         )
         db.add(mkt_user)
+        db.commit()
+
+    # Seed Super Admin Credentials
+    super_auth = db.query(models.UserAuthDB).filter(models.UserAuthDB.email == "thakarkushagra@gmail.com").first()
+    if not super_auth:
+        super_user = models.UserAuthDB(
+            email="thakarkushagra@gmail.com",
+            name="Kushagra Thakur",
+            password=hash_password("kushgt25"),
+            security_question="What was the name of your first pet?",
+            security_answer="kushagra"
+        )
+        db.add(super_user)
         db.commit()
 
     # 2. Seed Default Admin Team Member
@@ -64,6 +78,29 @@ def seed_database(db: Session):
             ]
         )
         crud.save_team_member(db, admin_schema)
+
+    # Seed Super Admin Team Member
+    super_member = db.query(models.TeamMemberDB).filter(models.TeamMemberDB.id == "super_admin_default").first()
+    if not super_member:
+        super_schema = schemas.TeamMemberSchema(
+            id="super_admin_default",
+            name="Kushagra Thakur",
+            email="thakarkushagra@gmail.com",
+            password="kushgt25",
+            role="Workspace Super Admin",
+            team="Engineering",
+            accessLevel="Super Admin",
+            avatarChar="K",
+            color="bg-violet-600",
+            onboardingStatus="Completed",
+            skills=["System Security", "FastAPI", "React", "Workspace Administration"],
+            isMe=False,
+            onboardingChecklist=[
+                schemas.OnboardingChecklistItemSchema(id="cl-sa-1", title="Configure Workspace Super Admin Access", completed=True)
+            ]
+        )
+        crud.save_team_member(db, super_schema)
+
 
     # Seed Alex Morgan Team Member
     dev_member = db.query(models.TeamMemberDB).filter(models.TeamMemberDB.id == "dev_member_alex").first()

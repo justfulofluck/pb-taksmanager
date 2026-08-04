@@ -6,6 +6,11 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      // Baota panel drops an immutable `.user.ini` into dist, which Vite's
+      // emptyOutDir cannot delete. Build without emptying the output dir.
+      emptyOutDir: false,
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

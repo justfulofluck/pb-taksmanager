@@ -412,7 +412,9 @@ export default function TeamOnboardingView({
 
                       {/* Access Level Badge */}
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${
-                        member.accessLevel === 'Admin'
+                        member.accessLevel === 'Super Admin'
+                          ? 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-900'
+                          : member.accessLevel === 'Admin'
                           ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-900'
                           : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                       }`}>

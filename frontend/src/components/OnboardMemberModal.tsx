@@ -44,7 +44,7 @@ export default function OnboardMemberModal({
   const [role, setRole] = useState('');
   const [team, setTeam] = useState(initialTeam || AVAILABLE_TEAMS[0]);
   const [customTeam, setCustomTeam] = useState('');
-  const [accessLevel, setAccessLevel] = useState<'Admin' | 'Member' | 'Viewer'>('Member');
+  const [accessLevel, setAccessLevel] = useState<'Super Admin' | 'Admin' | 'Member' | 'Viewer'>('Member');
   const [color, setColor] = useState(AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]);
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>(['Teamwork', 'Workspace Setup']);
@@ -321,6 +321,7 @@ export default function OnboardMemberModal({
                       onChange={(e) => setAccessLevel(e.target.value as any)}
                       className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
                     >
+                      <option value="Super Admin">👑 Super Admin (Owner Access)</option>
                       <option value="Member">Member (Standard Access)</option>
                       <option value="Admin">Admin (Full Management)</option>
                       <option value="Viewer">Viewer (Read Only)</option>
