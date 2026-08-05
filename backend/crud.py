@@ -25,6 +25,7 @@ def get_all_tasks(db: Session) -> List[schemas.TaskSchema]:
             status=t.status or "Not started",
             dueDate=t.due_date or "",
             priority=t.priority or "Medium Priority",
+            timeSpent=t.time_spent or 0,
             tags=tags,
             assignedTo=assigned_to,
             createdAt=t.created_at or "",
@@ -48,6 +49,7 @@ def save_task(db: Session, task_data: schemas.TaskSchema) -> schemas.TaskSchema:
         description=task_data.description,
         status=task_data.status,
         priority=task_data.priority,
+        time_spent=task_data.timeSpent,
         due_date=task_data.dueDate,
         created_at=task_data.createdAt,
         created_by=task_data.createdBy
@@ -141,8 +143,18 @@ def upsert_auth_for_member(db: Session, member_data: schemas.TeamMemberSchema) -
         return
     user = db.query(models.UserAuthDB).filter(models.UserAuthDB.email == email_key).first()
     if user:
+        modified = False
         if user.name != member_data.name:
             user.name = member_data.name
+            modified = True
+        
+        # Always sync the password if one is provided in member_data
+        new_hash = hash_password(member_data.password)
+        if user.password != new_hash and not verify_password(member_data.password, user.password):
+            user.password = new_hash
+            modified = True
+
+        if modified:
             db.commit()
         return
     db.add(models.UserAuthDB(

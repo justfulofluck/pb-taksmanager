@@ -450,6 +450,19 @@ export const ApiClient = {
     const updated = members.filter(m => m.id !== member.id);
     updated.push(member);
     localStorage.setItem('pinobite_team_members', JSON.stringify(updated));
+
+    // Also update login localStorage so fallback login works
+    if (member.password) {
+      const storedUsers = localStorage.getItem('pinobite_users');
+      const users = storedUsers ? JSON.parse(storedUsers) : {};
+      users[member.email.toLowerCase().trim()] = {
+        email: member.email,
+        name: member.name,
+        password: member.password
+      };
+      localStorage.setItem('pinobite_users', JSON.stringify(users));
+    }
+
     return member;
   },
 

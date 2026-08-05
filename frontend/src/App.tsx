@@ -1654,6 +1654,7 @@ export default function App() {
       {isFocusTimerOpen && (
         <FocusTimerModal
           tasks={tasks}
+          onUpdateTask={handleUpdateTask}
           onClose={() => setIsFocusTimerOpen(false)}
         />
       )}

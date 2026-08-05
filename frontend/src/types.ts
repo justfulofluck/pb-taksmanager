@@ -33,6 +33,7 @@ export interface Task {
   status: TaskStatus;
   dueDate: string;
   priority: TaskPriority;
+  timeSpent?: number;
   tags: string[];
   assignedTo: string[]; // TeamMember IDs
   createdAt: string;

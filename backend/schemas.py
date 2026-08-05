@@ -28,6 +28,7 @@ class TaskSchema(BaseModel):
     status: str = "Not started" # 'Not started' | 'In progress' | 'Done'
     dueDate: Optional[str] = Field(default="", alias="due_date")
     priority: str = "Medium Priority" # 'High Priority' | 'Medium Priority' | 'Low Priority' | 'Minimal Priority'
+    timeSpent: Optional[int] = Field(default=0, alias="time_spent")
     tags: List[str] = []
     assignedTo: List[str] = []
     createdAt: Optional[str] = Field(default="", alias="created_at")

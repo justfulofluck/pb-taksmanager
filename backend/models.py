@@ -65,6 +65,7 @@ class TaskDB(Base):
     description = Column(Text, nullable=True)
     status = Column(String(50), default="Not started") # Not started, In progress, Done
     priority = Column(String(50), default="Medium Priority") # High Priority, Medium Priority, Low Priority, Minimal Priority
+    time_spent = Column(Integer, default=0) # time spent in seconds
     due_date = Column(String(100), nullable=True)
     created_at = Column(String(100), nullable=True)
     created_by = Column(String(50), nullable=True)
