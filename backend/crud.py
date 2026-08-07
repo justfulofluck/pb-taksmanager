@@ -53,8 +53,7 @@ def save_task(db: Session, task_data: schemas.TaskSchema) -> schemas.TaskSchema:
         time_spent=task_data.timeSpent,
         due_date=task_data.dueDate,
         created_at=task_data.createdAt,
-        created_by=task_data.createdBy,
-        time_spent=task_data.timeSpent
+        created_by=task_data.createdBy
     )
     db.add(db_task)
     db.flush()
@@ -254,6 +253,11 @@ def get_comments(db: Session, task_id: Optional[str] = None) -> List[schemas.Com
 
 
 def save_comment(db: Session, comment_data: schemas.CommentSchema) -> schemas.CommentSchema:
+    task_id = comment_data.taskId or getattr(comment_data, 'task_id', 'global') or 'global'
+    sender_id = comment_data.senderId or getattr(comment_data, 'sender_id', 'user') or 'user'
+    sender_name = comment_data.senderName or getattr(comment_data, 'sender_name', 'User') or 'User'
+    sender_color = comment_data.senderColor or getattr(comment_data, 'sender_color', 'bg-indigo-500') or 'bg-indigo-500'
+
     existing = db.query(models.CommentDB).filter(models.CommentDB.id == comment_data.id).first()
     if existing:
         db.delete(existing)
@@ -261,10 +265,10 @@ def save_comment(db: Session, comment_data: schemas.CommentSchema) -> schemas.Co
 
     db_comment = models.CommentDB(
         id=comment_data.id,
-        task_id=comment_data.taskId,
-        sender_id=comment_data.senderId,
-        sender_name=comment_data.senderName,
-        sender_color=comment_data.senderColor,
+        task_id=task_id,
+        sender_id=sender_id,
+        sender_name=sender_name,
+        sender_color=sender_color,
         content=comment_data.content,
         timestamp=comment_data.timestamp
     )

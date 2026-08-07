@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User,
@@ -39,7 +39,7 @@ import {
   Building,
   Megaphone
 } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority, TeamMember } from './types';
+import { Task, TaskStatus, TaskPriority, TeamMember, ActivityLog } from './types';
 
 import { ApiClient } from './api';
 import Auth from './components/Auth';
@@ -180,7 +180,27 @@ export default function App() {
     }
   }, [toast]);
 
-  // Listen for simulated real-time teammate actions
+  // Real-time Notifications & Activity Feed State
+  const [activityFeed, setActivityFeed] = useState<ActivityLog[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+
+  const fetchActivityFeed = useCallback(async () => {
+    try {
+      const logs = await ApiClient.getActivityLogs();
+      setActivityFeed(logs);
+    } catch (e) {
+      console.warn("Failed to fetch activity logs", e);
+    }
+  }, []);
+
+  // Fetch initial activity feed and poll every 3 seconds for real-time sync
+  useEffect(() => {
+    fetchActivityFeed();
+    const interval = setInterval(fetchActivityFeed, 3000);
+    return () => clearInterval(interval);
+  }, [fetchActivityFeed]);
+
+  // Listen for simulated real-time teammate actions & activity updates
   useEffect(() => {
     const handleNotification = async (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -189,16 +209,49 @@ export default function App() {
           title: customEvent.detail.title,
           message: customEvent.detail.text
         });
+        setUnreadNotifCount(prev => prev + 1);
 
-        // Refresh tasks since they might have changed from teammate edits
+        // Refresh tasks and activity logs
         const list = await ApiClient.getTasks();
         setTasks(list);
+        fetchActivityFeed();
       }
     };
 
+    const handleActivityUpdate = () => {
+      fetchActivityFeed();
+      setUnreadNotifCount(prev => prev + 1);
+    };
+
     window.addEventListener('pinobite_notification', handleNotification);
-    return () => window.removeEventListener('pinobite_notification', handleNotification);
-  }, []);
+    window.addEventListener('pinobite_activity_update', handleActivityUpdate);
+    return () => {
+      window.removeEventListener('pinobite_notification', handleNotification);
+      window.removeEventListener('pinobite_activity_update', handleActivityUpdate);
+    };
+  }, [fetchActivityFeed]);
+
+  const toggleNotifDropdown = () => {
+    if (!isNotifOpen) {
+      setUnreadNotifCount(0);
+      fetchActivityFeed();
+    }
+    setIsNotifOpen(!isNotifOpen);
+  };
+
+  const formatTimeAgo = (timestampStr: string) => {
+    if (!timestampStr) return 'Just now';
+    const diffMs = Date.now() - new Date(timestampStr).getTime();
+    if (isNaN(diffMs) || diffMs < 0) return 'Just now';
+    const diffSecs = Math.floor(diffMs / 1000);
+    if (diffSecs < 10) return 'Just now';
+    if (diffSecs < 60) return `${diffSecs}s ago`;
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(timestampStr).toLocaleDateString();
+  };
 
   const handleLoginSuccess = async (user: { email: string; name: string }) => {
     setCurrentUser(user);
@@ -671,30 +724,71 @@ export default function App() {
           {/* Notification Bell */}
           <div className="relative">
             <button
-              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              onClick={toggleNotifDropdown}
               className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-colors cursor-pointer relative"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
+              {unreadNotifCount > 0 ? (
+                <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full animate-bounce shadow-md">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              ) : (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              )}
             </button>
 
             {isNotifOpen && (
-              <div className="fixed top-14 right-3 w-72 bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl border border-white/80 dark:border-slate-800/80 rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-tooltip-pop origin-top-right text-slate-900 dark:text-slate-100">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                  <span className="text-xs font-black uppercase">Recent Updates</span>
-                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full">Live Feed</span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="p-2.5 bg-slate-50/80 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300">
-                    <span className="font-bold text-slate-900 dark:text-white block">Sprint Goal Active</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Team updated task statuses in Kanban board</span>
+              <div className="fixed top-14 right-3 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-tooltip-pop origin-top-right text-slate-900 dark:text-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-black uppercase tracking-wider">Activity Notifications</span>
                   </div>
-                  <div className="p-2.5 bg-slate-50/80 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300">
-                    <span className="font-bold text-slate-900 dark:text-white block">High Priority Due Alert</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{tasks.filter(t => t.priority === 'High Priority').length} high-priority tickets pending</span>
-                  </div>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                    Live
+                  </span>
                 </div>
+
+                <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
+                  {activityFeed.length === 0 ? (
+                    <div className="py-6 text-center text-slate-400 text-xs flex flex-col items-center gap-1">
+                      <Bell className="w-6 h-6 text-slate-600 opacity-50" />
+                      <span>No activity notifications yet.</span>
+                    </div>
+                  ) : (
+                    activityFeed.slice(0, 8).map((log) => (
+                      <div 
+                        key={log.id} 
+                        className="p-2.5 bg-slate-50/80 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 dark:text-white text-xs">{log.userName || 'System'}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{formatTimeAgo(log.timestamp)}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{log.action}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {activityFeed.length > 0 && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
+                    <button 
+                      onClick={() => setUnreadNotifCount(0)} 
+                      className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline cursor-pointer"
+                    >
+                      Mark as read
+                    </button>
+                    <button 
+                      onClick={() => setActivityFeed([])} 
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium cursor-pointer"
+                    >
+                      Clear feed
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -778,12 +872,12 @@ export default function App() {
               { id: 'overview', label: 'Overview (Spreadsheet)', icon: Table, count: tasks.length },
               { id: 'kanban', label: 'Kanban Board', icon: Kanban, count: tasks.filter(t => t.status === 'In progress').length },
               ...(isAdmin ? [{ id: 'admin_panel', label: 'Admin Panel', icon: Shield, textBadge: 'ADMIN', badgeColor: 'rose', iconColor: 'text-rose-500' }] : []),
-              { id: 'team_panel', label: 'Team Panel', icon: Building, count: teamMembers.length, badgeColor: 'indigo', iconColor: 'text-indigo-500' },
+              ...(isAdmin ? [{ id: 'team_panel', label: 'Team Panel', icon: Building, count: teamMembers.length, badgeColor: 'indigo', iconColor: 'text-indigo-500' }] : []),
               { id: 'analytics', label: 'Analytics & Metrics', icon: BarChart3 },
               { id: 'due', label: 'Due / Critical Items', icon: Activity, count: tasks.filter(t => t.priority === 'High Priority').length, badgeColor: 'rose' },
               ...(isAdmin ? [{ id: 'team_onboarding', label: 'Team & Onboarding', icon: Users, count: teamMembers.length, badgeColor: 'emerald', iconColor: 'text-emerald-500' }] : []),
               ...((isAdmin || (currentUserMember?.teams?.includes('Marketing') || currentUserMember?.team === 'Marketing')) ? [{ id: 'social_media', label: 'Social Marketing', icon: Share2, textBadge: 'NEW', badgeColor: 'purple', iconColor: 'text-purple-500' }] : []),
-              { id: 'inbox', label: 'Inbox & Activity Logs', icon: Inbox, dot: true }
+              { id: 'inbox', label: 'Inbox & Activity Logs', icon: Inbox, dot: unreadNotifCount > 0 }
             ].map((item) => {
 
               const active = currentView === item.id;
@@ -791,7 +885,14 @@ export default function App() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => { setCurrentView(item.id as any); setSelectedIds([]); setIsSidebarOpen(false); }}
+                  onClick={() => { 
+                    setCurrentView(item.id as any); 
+                    setSelectedIds([]); 
+                    setIsSidebarOpen(false);
+                    if (item.id === 'inbox') {
+                      setUnreadNotifCount(0);
+                    }
+                  }}
                   className={`relative w-full ${isSidebarCollapsed ? 'px-2 py-2.5 justify-center' : 'px-3.5 py-2.5 justify-between'} rounded-xl text-[13px] font-semibold flex items-center transition-colors cursor-pointer group outline-none ${
                     active 
                       ? 'text-indigo-600 dark:text-indigo-400 font-bold' 
@@ -975,30 +1076,71 @@ export default function App() {
               {/* Notification Center Bell Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  onClick={toggleNotifDropdown}
                   className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer relative"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
+                  {unreadNotifCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full animate-bounce shadow-md">
+                      {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                    </span>
+                  ) : (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  )}
                 </button>
 
                 {isNotifOpen && (
                   <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-popup-in text-slate-900 dark:text-slate-100">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                      <span className="text-xs font-black uppercase">Recent Updates</span>
-                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-full">Live Feed</span>
-                    </div>
-                    <div className="space-y-2 text-xs">
-                      <div className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300">
-                        <span className="font-bold text-slate-900 dark:text-white block">Sprint Goal Active</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Team updated task statuses in Kanban board</span>
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-indigo-500" />
+                        <span className="text-xs font-black uppercase tracking-wider">Activity Notifications</span>
                       </div>
-                      <div className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300">
-                        <span className="font-bold text-slate-900 dark:text-white block">High Priority Due Alert</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{tasks.filter(t => t.priority === 'High Priority').length} high-priority tickets pending</span>
-                      </div>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                        Live
+                      </span>
                     </div>
+
+                    <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
+                      {activityFeed.length === 0 ? (
+                        <div className="py-6 text-center text-slate-400 text-xs flex flex-col items-center gap-1">
+                          <Bell className="w-6 h-6 text-slate-600 opacity-50" />
+                          <span>No activity notifications yet.</span>
+                        </div>
+                      ) : (
+                        activityFeed.slice(0, 8).map((log) => (
+                          <div 
+                            key={log.id} 
+                            className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-900 dark:text-white text-xs">{log.userName || 'System'}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">{formatTimeAgo(log.timestamp)}</span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{log.action}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {activityFeed.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
+                        <button 
+                          onClick={() => setUnreadNotifCount(0)} 
+                          className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline cursor-pointer"
+                        >
+                          Mark as read
+                        </button>
+                        <button 
+                          onClick={() => setActivityFeed([])} 
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium cursor-pointer"
+                        >
+                          Clear feed
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

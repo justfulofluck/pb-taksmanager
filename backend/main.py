@@ -15,10 +15,23 @@ async def lifespan(app: FastAPI):
     # Initialize SQLite tables
     Base.metadata.create_all(bind=engine)
     
-    # Run migrations for time_spent if needed
+    # Run migrations for comments table to remove FK constraint
     try:
         with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0;"))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS comments_new (
+                    id VARCHAR(50) PRIMARY KEY,
+                    task_id VARCHAR(100) NOT NULL,
+                    sender_id VARCHAR(255) NOT NULL,
+                    sender_name VARCHAR(255) NOT NULL,
+                    sender_color VARCHAR(50) DEFAULT 'bg-indigo-500',
+                    content TEXT NOT NULL,
+                    timestamp VARCHAR(100) NOT NULL
+                );
+            """))
+            conn.execute(text("INSERT OR IGNORE INTO comments_new SELECT id, task_id, sender_id, sender_name, sender_color, content, timestamp FROM comments;"))
+            conn.execute(text("DROP TABLE comments;"))
+            conn.execute(text("ALTER TABLE comments_new RENAME TO comments;"))
             conn.commit()
     except Exception:
         pass

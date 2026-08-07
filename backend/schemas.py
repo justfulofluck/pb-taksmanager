@@ -81,9 +81,9 @@ class TeamMemberSchema(BaseModel):
 
 class CommentSchema(BaseModel):
     id: str
-    taskId: str = Field(alias="task_id")
-    senderId: str = Field(alias="sender_id")
-    senderName: str = Field(alias="sender_name")
+    taskId: Optional[str] = Field(default="global", alias="task_id")
+    senderId: Optional[str] = Field(default="user", alias="sender_id")
+    senderName: Optional[str] = Field(default="User", alias="sender_name")
     senderColor: Optional[str] = Field(default="bg-indigo-500", alias="sender_color")
     content: str
     timestamp: str

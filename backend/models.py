@@ -69,13 +69,11 @@ class TaskDB(Base):
     due_date = Column(String(100), nullable=True)
     created_at = Column(String(100), nullable=True)
     created_by = Column(String(50), nullable=True)
-    time_spent = Column(Integer, default=0)
 
     assignments = relationship("TaskAssignmentDB", back_populates="task", cascade="all, delete-orphan")
     tags = relationship("TaskTagDB", back_populates="task", cascade="all, delete-orphan")
     subtasks = relationship("SubtaskDB", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("AttachmentDB", back_populates="task", cascade="all, delete-orphan")
-    comments = relationship("CommentDB", back_populates="task", cascade="all, delete-orphan")
 
 
 class TaskAssignmentDB(Base):
@@ -123,14 +121,12 @@ class CommentDB(Base):
     __tablename__ = "comments"
 
     id = Column(String(50), primary_key=True, index=True)
-    task_id = Column(String(50), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True)
-    sender_id = Column(String(50), nullable=False)
+    task_id = Column(String(100), nullable=False, index=True)
+    sender_id = Column(String(255), nullable=False)
     sender_name = Column(String(255), nullable=False)
     sender_color = Column(String(50), nullable=True, default="bg-indigo-500")
     content = Column(Text, nullable=False)
     timestamp = Column(String(100), nullable=False)
-
-    task = relationship("TaskDB", back_populates="comments")
 
 
 class ActivityLogDB(Base):
