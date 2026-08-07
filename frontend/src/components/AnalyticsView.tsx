@@ -16,19 +16,47 @@ import {
 interface AnalyticsViewProps {
   tasks: Task[];
   teamMembers?: TeamMember[];
+  currentUser?: { email: string; name: string } | null;
+  isAdmin?: boolean;
 }
 
-export default function AnalyticsView({ tasks, teamMembers = [] }: AnalyticsViewProps) {
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === 'Done').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'In progress').length;
-  const notStartedTasks = tasks.filter(t => t.status === 'Not started').length;
-  const highPriorityTasks = tasks.filter(t => t.priority === 'High Priority').length;
+export default function AnalyticsView({ tasks, teamMembers = [], currentUser, isAdmin = false }: AnalyticsViewProps) {
+  // Find current logged-in team member
+  const currentMember = currentUser 
+    ? teamMembers.find(m => 
+        (m.email && currentUser.email && m.email.toLowerCase() === currentUser.email.toLowerCase()) || 
+        (m.name && currentUser.name && m.name.toLowerCase() === currentUser.name.toLowerCase())
+      )
+    : null;
+
+  // Filter tasks: Admin sees all tasks; Member sees ONLY their assigned/relevant tasks
+  const displayTasks = isAdmin 
+    ? tasks 
+    : tasks.filter(t => {
+        if (currentMember && t.assignedTo.includes(currentMember.id)) return true;
+        if (currentUser?.email && t.assignedTo.includes(currentUser.email)) return true;
+        if (currentUser?.name && t.assignedTo.includes(currentUser.name)) return true;
+        return false;
+      });
+
+  // Filter workload list: Admin sees all members; Member sees ONLY themselves
+  const displayMembers = isAdmin 
+    ? teamMembers 
+    : (currentMember ? [currentMember] : teamMembers.filter(m => 
+        (m.email && currentUser?.email && m.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (m.name && currentUser?.name && m.name.toLowerCase() === currentUser.name.toLowerCase())
+      ));
+
+  const totalTasks = displayTasks.length;
+  const completedTasks = displayTasks.filter(t => t.status === 'Done').length;
+  const inProgressTasks = displayTasks.filter(t => t.status === 'In progress').length;
+  const notStartedTasks = displayTasks.filter(t => t.status === 'Not started').length;
+  const highPriorityTasks = displayTasks.filter(t => t.priority === 'High Priority').length;
 
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  // Breakdown by assignees
-  const assigneeStats = teamMembers.map(member => {
+  // Breakdown by assignees (using displayMembers)
+  const assigneeStats = displayMembers.map(member => {
     const assignedTasks = tasks.filter(t => t.assignedTo.includes(member.id));
     const completed = assignedTasks.filter(t => t.status === 'Done').length;
     return {
@@ -39,10 +67,10 @@ export default function AnalyticsView({ tasks, teamMembers = [] }: AnalyticsView
     };
   });
 
-  // Priority counts
-  const highCount = tasks.filter(t => t.priority === 'High Priority').length;
-  const lowCount = tasks.filter(t => t.priority === 'Low Priority').length;
-  const minCount = tasks.filter(t => t.priority === 'Minimal Priority').length;
+  // Priority counts based on displayTasks
+  const highCount = displayTasks.filter(t => t.priority === 'High Priority').length;
+  const lowCount = displayTasks.filter(t => t.priority === 'Low Priority').length;
+  const minCount = displayTasks.filter(t => t.priority === 'Minimal Priority').length;
 
   return (
     <div className="p-4 sm:p-8 pb-28 sm:pb-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto overflow-y-auto" id="analytics-dashboard">
@@ -186,7 +214,7 @@ export default function AnalyticsView({ tasks, teamMembers = [] }: AnalyticsView
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <h3 className="font-bold text-slate-900 dark:text-white text-base">Team Workload</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">{isAdmin ? 'Team Workload' : 'My Workload'}</h3>
             </div>
           </div>
 

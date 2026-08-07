@@ -183,11 +183,53 @@ export default function App() {
   // Real-time Notifications & Activity Feed State
   const [activityFeed, setActivityFeed] = useState<ActivityLog[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+  const [clearedNotifTime, setClearedNotifTime] = useState<number>(() => {
+    return Number(localStorage.getItem('pb_cleared_notif_time') || 0);
+  });
+  const [lastReadNotifTime, setLastReadNotifTime] = useState<number>(() => {
+    return Number(localStorage.getItem('pb_last_read_notif_time') || 0);
+  });
+
+  const markAllNotifsAsRead = useCallback(() => {
+    const now = Date.now();
+    localStorage.setItem('pb_last_read_notif_time', String(now));
+    setLastReadNotifTime(now);
+    setUnreadNotifCount(0);
+  }, []);
+
+  const clearAllNotifs = useCallback(() => {
+    const now = Date.now();
+    localStorage.setItem('pb_cleared_notif_time', String(now));
+    localStorage.setItem('pb_last_read_notif_time', String(now));
+    setClearedNotifTime(now);
+    setLastReadNotifTime(now);
+    setActivityFeed([]);
+    setUnreadNotifCount(0);
+  }, []);
 
   const fetchActivityFeed = useCallback(async () => {
     try {
       const logs = await ApiClient.getActivityLogs();
-      setActivityFeed(logs);
+      if (logs && Array.isArray(logs)) {
+        const cTime = Number(localStorage.getItem('pb_cleared_notif_time') || 0);
+        const rTime = Number(localStorage.getItem('pb_last_read_notif_time') || 0);
+
+        const visibleLogs = logs.filter(log => {
+          if (!log.timestamp) return true;
+          const logTime = new Date(log.timestamp).getTime();
+          return isNaN(logTime) || logTime > cTime;
+        });
+
+        setActivityFeed(visibleLogs);
+
+        const unread = visibleLogs.filter(log => {
+          if (!log.timestamp) return false;
+          const logTime = new Date(log.timestamp).getTime();
+          return !isNaN(logTime) && logTime > rTime;
+        }).length;
+
+        setUnreadNotifCount(unread);
+      }
     } catch (e) {
       console.warn("Failed to fetch activity logs", e);
     }
@@ -209,7 +251,6 @@ export default function App() {
           title: customEvent.detail.title,
           message: customEvent.detail.text
         });
-        setUnreadNotifCount(prev => prev + 1);
 
         // Refresh tasks and activity logs
         const list = await ApiClient.getTasks();
@@ -220,7 +261,6 @@ export default function App() {
 
     const handleActivityUpdate = () => {
       fetchActivityFeed();
-      setUnreadNotifCount(prev => prev + 1);
     };
 
     window.addEventListener('pinobite_notification', handleNotification);
@@ -233,8 +273,7 @@ export default function App() {
 
   const toggleNotifDropdown = () => {
     if (!isNotifOpen) {
-      setUnreadNotifCount(0);
-      fetchActivityFeed();
+      markAllNotifsAsRead();
     }
     setIsNotifOpen(!isNotifOpen);
   };
@@ -729,12 +768,10 @@ export default function App() {
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {unreadNotifCount > 0 ? (
+              {unreadNotifCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full animate-bounce shadow-md">
                   {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                 </span>
-              ) : (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               )}
             </button>
 
@@ -761,7 +798,7 @@ export default function App() {
                     activityFeed.slice(0, 8).map((log) => (
                       <div 
                         key={log.id} 
-                        className="p-2.5 bg-slate-50/80 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5"
+                        className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5 text-left"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-900 dark:text-white text-xs">{log.userName || 'System'}</span>
@@ -776,13 +813,13 @@ export default function App() {
                 {activityFeed.length > 0 && (
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
                     <button 
-                      onClick={() => setUnreadNotifCount(0)} 
+                      onClick={markAllNotifsAsRead} 
                       className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline cursor-pointer"
                     >
                       Mark as read
                     </button>
                     <button 
-                      onClick={() => setActivityFeed([])} 
+                      onClick={clearAllNotifs} 
                       className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium cursor-pointer"
                     >
                       Clear feed
@@ -874,10 +911,9 @@ export default function App() {
               ...(isAdmin ? [{ id: 'admin_panel', label: 'Admin Panel', icon: Shield, textBadge: 'ADMIN', badgeColor: 'rose', iconColor: 'text-rose-500' }] : []),
               ...(isAdmin ? [{ id: 'team_panel', label: 'Team Panel', icon: Building, count: teamMembers.length, badgeColor: 'indigo', iconColor: 'text-indigo-500' }] : []),
               { id: 'analytics', label: 'Analytics & Metrics', icon: BarChart3 },
-              { id: 'due', label: 'Due / Critical Items', icon: Activity, count: tasks.filter(t => t.priority === 'High Priority').length, badgeColor: 'rose' },
               ...(isAdmin ? [{ id: 'team_onboarding', label: 'Team & Onboarding', icon: Users, count: teamMembers.length, badgeColor: 'emerald', iconColor: 'text-emerald-500' }] : []),
               ...((isAdmin || (currentUserMember?.teams?.includes('Marketing') || currentUserMember?.team === 'Marketing')) ? [{ id: 'social_media', label: 'Social Marketing', icon: Share2, textBadge: 'NEW', badgeColor: 'purple', iconColor: 'text-purple-500' }] : []),
-              { id: 'inbox', label: 'Inbox & Activity Logs', icon: Inbox, dot: unreadNotifCount > 0 }
+              { id: 'inbox', label: 'Chat', icon: MessageSquare, dot: unreadNotifCount > 0 }
             ].map((item) => {
 
               const active = currentView === item.id;
@@ -1012,7 +1048,7 @@ export default function App() {
             <span className="font-semibold hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">Workspaces</span>
             <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600" />
             <span className="font-bold text-indigo-600 dark:text-indigo-400 capitalize">
-              {currentView} view
+              {currentView === 'inbox' ? 'chat' : currentView} view
             </span>
           </div>
 
@@ -1081,12 +1117,10 @@ export default function App() {
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
-                  {unreadNotifCount > 0 ? (
+                  {unreadNotifCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full animate-bounce shadow-md">
                       {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                     </span>
-                  ) : (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   )}
                 </button>
 
@@ -1113,7 +1147,7 @@ export default function App() {
                         activityFeed.slice(0, 8).map((log) => (
                           <div 
                             key={log.id} 
-                            className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5"
+                            className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-indigo-500/30 transition-all flex flex-col gap-0.5 text-left"
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-slate-900 dark:text-white text-xs">{log.userName || 'System'}</span>
@@ -1128,13 +1162,13 @@ export default function App() {
                     {activityFeed.length > 0 && (
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
                         <button 
-                          onClick={() => setUnreadNotifCount(0)} 
+                          onClick={markAllNotifsAsRead} 
                           className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline cursor-pointer"
                         >
                           Mark as read
                         </button>
                         <button 
-                          onClick={() => setActivityFeed([])} 
+                          onClick={clearAllNotifs} 
                           className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium cursor-pointer"
                         >
                           Clear feed
@@ -1564,6 +1598,8 @@ export default function App() {
                     <AnalyticsView 
                       tasks={tasks}
                       teamMembers={teamMembers}
+                      currentUser={currentUser}
+                      isAdmin={isAdmin}
                     />
                   )}
 
@@ -1719,7 +1755,7 @@ export default function App() {
           }`}
         >
           <MessageSquare className="w-5 h-5" />
-          <span className="text-[10px]">Inbox</span>
+          <span className="text-[10px]">Chat</span>
         </button>
       </nav>
 

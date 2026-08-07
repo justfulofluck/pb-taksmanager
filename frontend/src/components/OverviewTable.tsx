@@ -185,6 +185,15 @@ export default function OverviewTable({
 
   isAdmin = true
 }: OverviewTableProps) {
+  const isTaskOverdue = (t: Task) => {
+    if (t.status === 'Done') return false;
+    if (!t.dueDate) return false;
+    const due = new Date(t.dueDate);
+    if (isNaN(due.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
+  };
 
   // Dropdown states per column
   const [activeDropdown, setActiveDropdown] = useState<{ rowId: string; col: 'status' | 'priority' | 'assign' } | null>(null);
@@ -309,6 +318,7 @@ export default function OverviewTable({
         ) : (
           tasks.map((task) => {
             const isSelected = selectedIds.includes(task.id);
+            const overdue = isTaskOverdue(task);
             return (
               <div 
                 key={task.id} 
@@ -325,13 +335,25 @@ export default function OverviewTable({
                       className="mt-1 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500/20 w-4 h-4 cursor-pointer shrink-0"
                     />
                     <div className="flex-1 min-w-0 space-y-1">
-                      <input
-                        type="text"
-                        value={task.task}
-                        onChange={(e) => onUpdateTask({ ...task, task: e.target.value })}
-                        placeholder="Task title..."
-                        className="w-full font-bold text-slate-900 dark:text-slate-100 text-sm bg-transparent outline-none focus:bg-slate-100 dark:focus:bg-slate-800 rounded px-1 py-0.5"
-                      />
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <input
+                          type="text"
+                          value={task.task}
+                          onChange={(e) => onUpdateTask({ ...task, task: e.target.value })}
+                          placeholder="Task title..."
+                          className="w-full font-bold text-slate-900 dark:text-slate-100 text-sm bg-transparent outline-none focus:bg-slate-100 dark:focus:bg-slate-800 rounded px-1 py-0.5"
+                        />
+                        {overdue && (
+                          <span className="bg-rose-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 animate-pulse">
+                            <AlertTriangle className="w-2.5 h-2.5" /> OVERDUE
+                          </span>
+                        )}
+                        {task.priority === 'High Priority' && !overdue && (
+                          <span className="bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1">
+                            <AlertTriangle className="w-2.5 h-2.5" /> CRITICAL
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={task.description}
@@ -522,8 +544,18 @@ export default function OverviewTable({
                             value={task.task}
                             onChange={(e) => onUpdateTask({ ...task, task: e.target.value })}
                             placeholder="Type task title..."
-                            className="w-full bg-transparent border-transparent text-slate-900 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-600 outline-none focus:bg-slate-100 dark:focus:bg-slate-800 focus:border-slate-200 dark:focus:border-slate-700 focus:ring-0 rounded px-1.5 py-0.5 text-[15px] font-bold transition-all"
+                            className="flex-1 min-w-0 bg-transparent border-transparent text-slate-900 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-600 outline-none focus:bg-slate-100 dark:focus:bg-slate-800 focus:border-slate-200 dark:focus:border-slate-700 focus:ring-0 rounded px-1.5 py-0.5 text-[15px] font-bold transition-all"
                           />
+                          {isTaskOverdue(task) && (
+                            <span className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs animate-pulse">
+                              <AlertTriangle className="w-3 h-3" /> OVERDUE
+                            </span>
+                          )}
+                          {task.priority === 'High Priority' && !isTaskOverdue(task) && (
+                            <span className="bg-amber-500 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+                              <AlertTriangle className="w-3 h-3" /> CRITICAL
+                            </span>
+                          )}
                         </div>
                         <input
                           type="text"
