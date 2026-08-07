@@ -115,6 +115,7 @@ export default function App() {
   
   // Modal / detail view
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [draftTask, setDraftTask] = useState<Task | null>(null);
 
   // Add-on Modals
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -220,7 +221,7 @@ export default function App() {
     setCurrentUser(null);
   };
 
-  const handleAddTask = async (customTaskOrMemberId?: Task | string) => {
+  const handleAddTask = (customTaskOrMemberId?: Task | string) => {
     let newTask: Task;
     if (typeof customTaskOrMemberId === 'object' && customTaskOrMemberId !== null) {
       newTask = customTaskOrMemberId;
@@ -229,18 +230,22 @@ export default function App() {
       const assignedId = typeof customTaskOrMemberId === 'string' ? customTaskOrMemberId : defaultAssignee;
       newTask = {
         id: `task-${Date.now()}`,
-        task: 'New Team Sprint Task',
-        description: 'Provide requirements and design guidelines here...',
+        task: '',
+        description: '',
         status: 'Not started',
         dueDate: new Date().toISOString().split('T')[0],
         priority: 'Minimal Priority',
-        tags: ['Ops'],
+        tags: [],
         assignedTo: [assignedId],
         createdAt: new Date().toISOString(),
         createdBy: currentUser?.email || 'user'
       };
     }
 
+    setDraftTask(newTask);
+  };
+
+  const commitNewTask = async (newTask: Task) => {
     const saved = await ApiClient.saveTask(newTask);
     const updated = [saved, ...tasks];
     setTasks(updated);
@@ -255,6 +260,7 @@ export default function App() {
     };
     await ApiClient.addActivityLog(newLog);
     window.dispatchEvent(new Event('pinobite_activity_update'));
+    setDraftTask(null);
   };
 
 
@@ -660,14 +666,7 @@ export default function App() {
             {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
           </button>
 
-          {/* Focus Timer Trigger */}
-          <button
-            onClick={() => setIsFocusTimerOpen(true)}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-colors cursor-pointer"
-            title="Focus Timer"
-          >
-            <Clock className="w-4 h-4" />
-          </button>
+
 
           {/* Notification Bell */}
           <div className="relative">
@@ -941,15 +940,7 @@ export default function App() {
                 <span className="hidden sm:inline">AI Helper</span>
               </button>
 
-              {/* Focus Timer Button */}
-              <button
-                onClick={() => setIsFocusTimerOpen(true)}
-                className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
-                title="Sprint Focus Timer"
-              >
-                <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                <span className="hidden sm:inline">Timer</span>
-              </button>
+
 
               {/* Theme Toggle Button */}
               <button
@@ -1621,9 +1612,24 @@ export default function App() {
           onClose={() => setSelectedTask(null)}
           onUpdate={handleUpdateTask}
           onDelete={handleDeleteTask}
-          currentUser={currentUser}
+          currentUser={currentUser!}
           teamMembers={teamMembers}
           isAdmin={isAdmin}
+        />
+      )}
+
+      {/* CREATE NEW TASK MODAL */}
+      {draftTask && (
+        <TaskModal 
+          task={draftTask}
+          onClose={() => setDraftTask(null)}
+          onUpdate={(t) => setDraftTask(t)}
+          onDelete={() => setDraftTask(null)}
+          currentUser={currentUser!}
+          teamMembers={teamMembers}
+          isAdmin={isAdmin}
+          isCreateMode={true}
+          onCreate={commitNewTask}
         />
       )}
 

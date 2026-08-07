@@ -17,7 +17,8 @@ import {
   ChevronDown,
   Info,
   Edit2,
-  UserPlus
+  UserPlus,
+  CheckCircle2
 } from 'lucide-react';
 import { Task, TeamMember, TaskStatus, TaskPriority } from '../types';
 import { INITIAL_TEAM, TAG_OPTIONS } from '../data/team';
@@ -37,6 +38,138 @@ interface OverviewTableProps {
 
   isAdmin?: boolean;
 }
+
+const SubtaskRow = ({ st, onUpdate }: { st: any, onUpdate: (updated: any) => void }) => {
+  const [active, setActive] = useState(false);
+  const [seconds, setSeconds] = useState(st.timeSpent || 0);
+
+  useEffect(() => {
+    let interval: any;
+    if (active && !st.completed) {
+      interval = setInterval(() => setSeconds((s: number) => s + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [active, st.completed]);
+
+  const handleToggleTimer = () => {
+    if (active) {
+      setActive(false);
+      onUpdate({ ...st, timeSpent: seconds });
+    } else {
+      setActive(true);
+    }
+  };
+
+  const handleComplete = (checked: boolean) => {
+    setActive(false);
+    onUpdate({ ...st, completed: checked, timeSpent: seconds });
+  };
+
+  const formatTime = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-2.5 group/st">
+      <input
+        type="checkbox"
+        checked={st.completed}
+        onChange={(e) => handleComplete(e.target.checked)}
+        className="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-600 focus:ring-emerald-500/20 cursor-pointer transition-colors shrink-0"
+      />
+      <span className={`text-[12px] font-medium transition-colors truncate ${st.completed ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
+        {st.title}
+      </span>
+      
+      <div className="ml-auto flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded px-2 py-0.5 shrink-0 border border-slate-200 dark:border-slate-700 transition-colors">
+        <Clock className={`w-3 h-3 ${active ? 'text-emerald-500 animate-pulse' : 'text-indigo-500'}`} />
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono w-10 text-center">
+          {formatTime(seconds)}
+        </span>
+        {!st.completed && (
+          <button 
+            type="button" 
+            onClick={handleToggleTimer}
+            className={`transition-colors ml-1 cursor-pointer ${active ? 'text-rose-500 hover:text-rose-600' : 'text-slate-400 hover:text-emerald-500'}`} 
+            title={active ? "Stop Timer" : "Start Timer"}
+          >
+            {active ? (
+               <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+            ) : (
+               <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MainTaskTimer = ({ task, onUpdate }: { task: any, onUpdate: (updated: any) => void }) => {
+  const [active, setActive] = useState(false);
+  const [seconds, setSeconds] = useState(task.timeSpent || 0);
+
+  // Sync if updated externally (e.g., from subtasks)
+  useEffect(() => {
+    if (!active) {
+      setSeconds(task.timeSpent || 0);
+    }
+  }, [task.timeSpent, active]);
+
+  useEffect(() => {
+    let interval: any;
+    if (active) {
+      interval = setInterval(() => setSeconds((s: number) => s + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [active]);
+
+  const handleToggleTimer = () => {
+    if (active) {
+      setActive(false);
+      onUpdate({ ...task, timeSpent: seconds });
+    } else {
+      setActive(true);
+    }
+  };
+
+  const formatTime = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hrs > 0) return `${hrs}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+    return `${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+  };
+
+  return (
+    <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold border transition-colors shrink-0 ${
+      active 
+        ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800' 
+        : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+    }`}>
+      <Clock className={`w-3 h-3 ${active ? 'animate-pulse' : ''}`} />
+      <span className="font-mono">{formatTime(seconds)}</span>
+      <button 
+        type="button" 
+        onClick={handleToggleTimer}
+        className={`ml-1 cursor-pointer transition-colors ${
+          active ? 'text-rose-500 hover:text-rose-700' : 'text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300'
+        }`}
+        title={active ? "Stop Timer" : "Start Timer"}
+      >
+        {active ? (
+          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+        ) : (
+          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export default function OverviewTable({
   tasks,
@@ -400,6 +533,32 @@ export default function OverviewTable({
                           className="w-full bg-transparent border-transparent text-[13px] text-slate-500 dark:text-slate-400 placeholder-slate-300 dark:placeholder-slate-600 outline-none focus:bg-slate-100 dark:focus:bg-slate-800 focus:border-slate-200 dark:focus:border-slate-700 focus:ring-0 rounded px-1.5 py-0.5 transition-all font-medium"
                         />
 
+                        {/* Inline Subtasks List */}
+                        {task.subtasks && task.subtasks.length > 0 && (
+                          <div className="pt-2 pl-1.5 space-y-1.5">
+                            {task.subtasks.map((st) => (
+                              <SubtaskRow
+                                key={st.id}
+                                st={st}
+                                onUpdate={(updatedSt) => {
+                                  const updatedSubtasks = task.subtasks!.map(s => s.id === updatedSt.id ? updatedSt : s);
+                                  
+                                  let updatedTask = { ...task, subtasks: updatedSubtasks };
+                                  
+                                  // Check if all subtasks are completed
+                                  const allCompleted = updatedSubtasks.every(s => s.completed);
+                                  if (allCompleted) {
+                                      const totalTime = updatedSubtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0);
+                                      updatedTask.timeSpent = totalTime;
+                                  }
+                                  
+                                  onUpdateTask(updatedTask);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+
                         {/* Inline Tag List representation */}
                         <div className="flex flex-wrap gap-1.5 pt-2 pl-1.5">
                           {task.tags.map((tag) => (
@@ -410,6 +569,9 @@ export default function OverviewTable({
                               {tag}
                             </span>
                           ))}
+                          {/* Task Timer (Rendered if no subtasks OR if we just want it available on all tasks) */}
+                          <MainTaskTimer task={task} onUpdate={onUpdateTask} />
+                          
                           <button
                             onClick={() => onSelectTask(task)}
                             className="text-[10px] text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-bold cursor-pointer"
@@ -601,10 +763,10 @@ export default function OverviewTable({
                         )}
                         <button
                           onClick={() => onSelectTask(task)}
-                          className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                          className="text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 dark:bg-indigo-900/30 dark:hover:bg-indigo-600 dark:text-indigo-400 dark:hover:text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
                           title="View comments & details"
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          Action
                         </button>
                       </div>
 

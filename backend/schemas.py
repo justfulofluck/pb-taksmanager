@@ -7,6 +7,7 @@ class SubtaskSchema(BaseModel):
     id: str
     title: str
     completed: bool = False
+    timeSpent: int = Field(default=0, alias="time_spent")
 
     class Config:
         from_attributes = True
@@ -35,6 +36,7 @@ class TaskSchema(BaseModel):
     createdBy: Optional[str] = Field(default="user", alias="created_by")
     attachments: Optional[List[AttachmentSchema]] = []
     subtasks: Optional[List[SubtaskSchema]] = []
+    timeSpent: int = Field(default=0, alias="time_spent")
 
     class Config:
         from_attributes = True

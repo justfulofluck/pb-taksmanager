@@ -13,9 +13,11 @@ interface TaskModalProps {
   currentUser: { name: string; email: string };
   teamMembers?: TeamMember[];
   isAdmin?: boolean;
+  isCreateMode?: boolean;
+  onCreate?: (task: Task) => void;
 }
 
-export default function TaskModal({ task, onClose, onUpdate, onDelete, currentUser, teamMembers: propTeamMembers, isAdmin = true }: TaskModalProps) {
+export default function TaskModal({ task, onClose, onUpdate, onDelete, currentUser, teamMembers: propTeamMembers, isAdmin = true, isCreateMode = false, onCreate }: TaskModalProps) {
   const [title, setTitle] = useState(task.task);
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -81,8 +83,10 @@ export default function TaskModal({ task, onClose, onUpdate, onDelete, currentUs
 
   // Auto-save changes on field changes
   useEffect(() => {
-    handleSave();
-  }, [title, description, status, priority, dueDate, selectedTags, assignedTo, attachments, subtasks]);
+    if (!isCreateMode) {
+      handleSave();
+    }
+  }, [title, description, status, priority, dueDate, selectedTags, assignedTo, attachments, subtasks, isCreateMode]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -513,6 +517,30 @@ export default function TaskModal({ task, onClose, onUpdate, onDelete, currentUs
             </form>
           </div>
 
+          {isCreateMode && (
+            <div className="pt-4 mt-4 border-t border-slate-800 flex justify-end">
+              <button 
+                onClick={() => {
+                  const updated: Task = {
+                    ...task,
+                    task: title || 'Untitled Task',
+                    description,
+                    status,
+                    priority,
+                    dueDate,
+                    tags: selectedTags,
+                    assignedTo,
+                    attachments,
+                    subtasks,
+                  };
+                  onCreate?.(updated);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2 rounded-xl transition-all shadow-lg cursor-pointer"
+              >
+                Create Task
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -15,7 +15,7 @@ def get_all_tasks(db: Session) -> List[schemas.TaskSchema]:
     for t in task_records:
         tags = [tag.tag for tag in t.tags]
         assigned_to = [a.member_id for a in t.assignments]
-        subtasks = [schemas.SubtaskSchema(id=s.id, title=s.title, completed=s.completed) for s in t.subtasks]
+        subtasks = [schemas.SubtaskSchema(id=s.id, title=s.title, completed=s.completed, time_spent=s.time_spent) for s in t.subtasks]
         attachments = [schemas.AttachmentSchema(id=a.id, name=a.name or "", url=a.url) for a in t.attachments]
         
         results.append(schemas.TaskSchema(
@@ -31,7 +31,8 @@ def get_all_tasks(db: Session) -> List[schemas.TaskSchema]:
             createdAt=t.created_at or "",
             createdBy=t.created_by or "user",
             subtasks=subtasks,
-            attachments=attachments
+            attachments=attachments,
+            time_spent=t.time_spent or 0
         ))
     return results
 
@@ -52,7 +53,8 @@ def save_task(db: Session, task_data: schemas.TaskSchema) -> schemas.TaskSchema:
         time_spent=task_data.timeSpent,
         due_date=task_data.dueDate,
         created_at=task_data.createdAt,
-        created_by=task_data.createdBy
+        created_by=task_data.createdBy,
+        time_spent=task_data.timeSpent
     )
     db.add(db_task)
     db.flush()
@@ -68,7 +70,7 @@ def save_task(db: Session, task_data: schemas.TaskSchema) -> schemas.TaskSchema:
     # Add subtasks
     if task_data.subtasks:
         for st in task_data.subtasks:
-            db.add(models.SubtaskDB(id=st.id, task_id=task_data.id, title=st.title, completed=st.completed))
+            db.add(models.SubtaskDB(id=st.id, task_id=task_data.id, title=st.title, completed=st.completed, time_spent=st.timeSpent))
 
     # Add attachments
     if task_data.attachments:

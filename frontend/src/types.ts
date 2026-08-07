@@ -39,7 +39,8 @@ export interface Task {
   createdAt: string;
   createdBy: string;
   attachments?: { id: string; name: string; url: string }[];
-  subtasks?: { id: string; title: string; completed: boolean }[];
+  subtasks?: { id: string; title: string; completed: boolean; timeSpent?: number }[];
+  timeSpent?: number;
 }
 
 export interface Comment {

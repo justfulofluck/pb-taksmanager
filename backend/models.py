@@ -69,6 +69,7 @@ class TaskDB(Base):
     due_date = Column(String(100), nullable=True)
     created_at = Column(String(100), nullable=True)
     created_by = Column(String(50), nullable=True)
+    time_spent = Column(Integer, default=0)
 
     assignments = relationship("TaskAssignmentDB", back_populates="task", cascade="all, delete-orphan")
     tags = relationship("TaskTagDB", back_populates="task", cascade="all, delete-orphan")
@@ -102,6 +103,7 @@ class SubtaskDB(Base):
     task_id = Column(String(50), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(255), nullable=False)
     completed = Column(Boolean, default=False)
+    time_spent = Column(Integer, default=0)
 
     task = relationship("TaskDB", back_populates="subtasks")
 

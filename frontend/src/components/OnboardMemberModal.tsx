@@ -50,8 +50,6 @@ export default function OnboardMemberModal({
   const [skills, setSkills] = useState<string[]>(['Teamwork', 'Workspace Setup']);
   const [password, setPassword] = useState('Welcome123');
   const [sendInvite, setSendInvite] = useState(true);
-  const [assignInitialTask, setAssignInitialTask] = useState(true);
-  const [selectedTaskTitle, setSelectedTaskTitle] = useState('Workspace Onboarding & Team Intro');
   const [checklist, setChecklist] = useState<OnboardingTaskItem[]>(DEFAULT_ONBOARDING_CHECKLIST);
   const [createdMember, setCreatedMember] = useState<TeamMember | null>(null);
   const [copied, setCopied] = useState(false);
@@ -140,22 +138,6 @@ export default function OnboardMemberModal({
     };
     localStorage.setItem('pinobite_users', JSON.stringify(users));
 
-    // If assign initial task is checked, create a task for this member
-    if (assignInitialTask) {
-      const newTask: Task = {
-        id: `task-ob-${Date.now()}`,
-        task: `${selectedTaskTitle} (${newMember.name})`,
-        description: `Welcome task assigned during team onboarding for ${newMember.name} in team ${finalTeam}.`,
-        status: 'Not started',
-        dueDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-        priority: 'High Priority',
-        tags: ['Onboarding', finalTeam],
-        assignedTo: [newMember.id],
-        createdAt: new Date().toISOString(),
-        createdBy: 'workspace-admin'
-      };
-      await ApiClient.saveTask(newTask);
-    }
 
     // Add Activity Log
     await ApiClient.addActivityLog({
@@ -450,33 +432,7 @@ export default function OnboardMemberModal({
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-indigo-300">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">Assign Initial Onboarding Task</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Automatically creates and assigns a starter sprint task</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={assignInitialTask}
-                    onChange={(e) => setAssignInitialTask(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                  />
-                </label>
               </div>
-
-              {assignInitialTask && (
-                <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
-                    Initial Task Title
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedTaskTitle}
-                    onChange={(e) => setSelectedTaskTitle(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-500"
-                  />
-                </div>
-              )}
 
               {/* Onboarding Checklist Steps */}
               <div className="space-y-2">

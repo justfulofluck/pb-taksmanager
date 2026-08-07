@@ -5,6 +5,7 @@ from typing import List, Optional
 from contextlib import asynccontextmanager
 
 from database import engine, Base, get_db
+from sqlalchemy import text
 import models, schemas, crud, email_service
 
 
@@ -13,7 +14,21 @@ import models, schemas, crud, email_service
 async def lifespan(app: FastAPI):
     # Initialize SQLite tables
     Base.metadata.create_all(bind=engine)
-
+    
+    # Run migrations for time_spent if needed
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0;"))
+            conn.commit()
+    except Exception:
+        pass
+        
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE subtasks ADD COLUMN time_spent INTEGER DEFAULT 0;"))
+            conn.commit()
+    except Exception:
+        pass
 
     yield
 
