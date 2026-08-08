@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageSquare, Users, Hash, UserCircle2 } from 'lucide-react';
+import { Send, MessageSquare, Users, Hash, UserCircle2, ArrowLeft } from 'lucide-react';
 import { Comment, Task, TeamMember } from '../types';
 import { ApiClient } from '../api';
 
@@ -26,6 +26,7 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
     type: 'channel'
   });
   
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [typedMessage, setTypedMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -157,11 +158,40 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
   };
 
   return (
-    <div className="p-4 sm:p-6 h-[calc(100vh-70px)] flex flex-col w-full max-w-full" id="collaboration-hub">
+    <div className="p-2 sm:p-4 md:p-6 h-[calc(100vh-80px)] min-h-[400px] flex flex-col w-full max-w-full" id="collaboration-hub">
+      
+      {/* Mobile Tab View Toggle Pills (Visible only on < md screens) */}
+      <div className="md:hidden flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 mb-3 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileView('list')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileView === 'list'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Select Chat</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileView('chat')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileView === 'chat'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span className="truncate">{activeTarget.name}</span>
+        </button>
+      </div>
+
       <div className="flex-1 flex gap-4 w-full h-full min-h-0">
         
         {/* Left Sidebar: Channels & Direct Messages (Who to chat with) */}
-        <div className="w-64 sm:w-72 bg-slate-900 rounded-xl border border-slate-800 p-4 flex flex-col h-full shrink-0 shadow-lg overflow-y-auto space-y-6">
+        <div className={`${mobileView === 'list' ? 'flex w-full' : 'hidden md:flex'} md:w-64 lg:w-72 bg-slate-900 rounded-xl border border-slate-800 p-4 flex-col h-full shrink-0 shadow-lg overflow-y-auto space-y-6`}>
           
           {/* Header */}
           <div>
@@ -175,7 +205,10 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
               Channels
             </span>
             <button
-              onClick={() => setActiveTarget({ id: 'global', name: 'General Workspace', type: 'channel' })}
+              onClick={() => {
+                setActiveTarget({ id: 'global', name: 'General Workspace', type: 'channel' });
+                setMobileView('chat');
+              }}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left cursor-pointer ${
                 activeTarget.id === 'global'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
@@ -216,13 +249,16 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
                       return (
                         <button
                           key={member.id}
-                          onClick={() => setActiveTarget({
-                            id: member.id,
-                            name: formattedName,
-                            type: 'dm',
-                            email: member.email,
-                            role: member.role
-                          })}
+                          onClick={() => {
+                            setActiveTarget({
+                              id: member.id,
+                              name: formattedName,
+                              type: 'dm',
+                              email: member.email,
+                              role: member.role
+                            });
+                            setMobileView('chat');
+                          }}
                           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left cursor-pointer ${
                             isSelected
                               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
@@ -261,45 +297,54 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
         </div>
 
         {/* Right Main Chat Area */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 flex flex-col flex-1 h-full shadow-lg min-w-0">
+        <div className={`${mobileView === 'chat' ? 'flex w-full' : 'hidden md:flex'} bg-slate-900 rounded-xl border border-slate-800 p-3 sm:p-5 flex-col flex-1 h-full shadow-lg min-w-0`}>
           
           {/* Active Chat Header */}
-          <div className="flex justify-between items-center pb-3 border-b border-slate-800 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-indigo-600/10 rounded-xl text-indigo-400 border border-indigo-500/20">
+          <div className="flex justify-between items-center pb-3 border-b border-slate-800 mb-3 sm:mb-4 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setMobileView('list')}
+                className="md:hidden p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 cursor-pointer shrink-0"
+                title="Back to Channels"
+              >
+                <ArrowLeft className="w-4 h-4 text-indigo-400" />
+              </button>
+              <div className="p-2 sm:p-2.5 bg-indigo-600/10 rounded-xl text-indigo-400 border border-indigo-500/20 shrink-0">
                 {activeTarget.type === 'channel' ? (
-                  <Hash className="w-5 h-5 text-indigo-500" />
+                  <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
                 ) : (
-                  <UserCircle2 className="w-5 h-5 text-indigo-500" />
+                  <UserCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
                 )}
               </div>
-              <div>
-                <h3 className="font-bold text-slate-100 text-base flex items-center gap-2">
-                  <span>{activeTarget.name}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800/50 uppercase font-semibold">
+              <div className="min-w-0">
+                <h3 className="font-bold text-slate-100 text-sm sm:text-base flex items-center gap-2 truncate">
+                  <span className="truncate">{activeTarget.name}</span>
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800/50 uppercase font-semibold shrink-0">
                     {activeTarget.type}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                   {activeTarget.type === 'channel' 
                     ? 'General workspace chat for all team members' 
-                    : `Direct private conversation with ${activeTarget.name} (${activeTarget.email || ''})`}
+                    : `Direct private conversation with ${activeTarget.name}`}
                 </p>
               </div>
             </div>
             
             <button 
+              type="button"
               onClick={clearSessionLogs}
-              className="text-xs text-slate-400 hover:text-slate-200 transition-colors px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 cursor-pointer"
+              className="text-xs text-slate-400 hover:text-slate-200 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 cursor-pointer shrink-0 whitespace-nowrap"
             >
               Clear Chat
             </button>
           </div>
 
           {/* Message Area */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 sm:pr-2 mb-3 sm:mb-4 custom-scrollbar">
             {chatMessages.length === 0 ? (
-              <div className="text-center text-sm text-slate-500 flex flex-col items-center justify-center h-full gap-2">
+              <div className="text-center text-xs sm:text-sm text-slate-500 flex flex-col items-center justify-center h-full gap-2 p-4">
                 <MessageSquare className="w-8 h-8 text-slate-700" />
                 <span>No messages in {activeTarget.name} yet. Send a message to start chatting!</span>
               </div>
@@ -309,11 +354,11 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
                 return (
                   <div 
                     key={msg.id} 
-                    className={`flex flex-col space-y-1 max-w-[75%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}
+                    className={`flex flex-col space-y-1 max-w-[85%] sm:max-w-[75%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}
                   >
                     <div className="flex items-center gap-2 px-1">
                       {!isMe && (
-                        <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-extrabold text-white">
+                        <span className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-extrabold text-white shrink-0">
                           {msg.senderName.substring(0, 2).toUpperCase()}
                         </span>
                       )}
@@ -322,7 +367,7 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <div className={`p-3 rounded-2xl text-xs sm:text-sm leading-relaxed border ${
+                    <div className={`p-2.5 sm:p-3 rounded-2xl text-xs sm:text-sm leading-relaxed border break-words ${
                       isMe 
                         ? 'bg-indigo-600 text-white border-indigo-500/50 rounded-tr-none' 
                         : 'bg-slate-950 text-slate-200 border-slate-800 rounded-tl-none'
@@ -337,20 +382,20 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
           </div>
 
           {/* Input Form */}
-          <form onSubmit={handleSendChat} className="flex gap-3 pt-3 border-t border-slate-800/80">
+          <form onSubmit={handleSendChat} className="flex gap-2 sm:gap-3 pt-3 border-t border-slate-800/80">
             <input
               type="text"
               placeholder={`Send message to ${activeTarget.name}...`}
               value={typedMessage}
               onChange={(e) => setTypedMessage(e.target.value)}
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 text-slate-100 placeholder-slate-500 transition-colors"
+              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-indigo-500 text-slate-100 placeholder-slate-500 transition-colors min-w-0"
             />
             <button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 rounded-xl flex items-center justify-center gap-2 font-medium text-sm transition-all cursor-pointer min-h-[44px] active:scale-95 shadow-md shadow-indigo-600/20"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 sm:px-5 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm transition-all cursor-pointer min-h-[40px] sm:min-h-[44px] active:scale-95 shadow-md shadow-indigo-600/20 shrink-0"
             >
               <span>Send</span>
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </form>
 
@@ -360,3 +405,4 @@ export default function InboxPanel({ tasks, onTasksUpdateExternally, currentUser
     </div>
   );
 }
+

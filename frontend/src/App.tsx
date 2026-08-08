@@ -733,9 +733,6 @@ export default function App() {
             P
           </div>
           <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">Pinobite</span>
-          <span className="text-[9px] bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold uppercase backdrop-blur-md">
-            Live
-          </span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -1054,16 +1051,18 @@ export default function App() {
 
           <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
             {/* Unified Search engine inside the header */}
-            <div className="relative w-40 sm:w-60 lg:w-80">
-              <Search className="absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500 w-4 h-4 my-auto" />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md text-slate-900 dark:text-slate-100 border border-white/80 dark:border-slate-700/80 focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl py-2 pl-9 sm:pl-10 pr-3 text-xs sm:text-[13px] outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500 shadow-inner"
-              />
-            </div>
+            {(currentView === 'overview' || currentView === 'kanban') && (
+              <div className="relative w-40 sm:w-60 lg:w-80">
+                <Search className="absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500 w-4 h-4 my-auto" />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md text-slate-900 dark:text-slate-100 border border-white/80 dark:border-slate-700/80 focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl py-2 pl-9 sm:pl-10 pr-3 text-xs sm:text-[13px] outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500 shadow-inner"
+                />
+              </div>
+            )}
 
             {/* ADD-ON ACTION BUTTONS */}
             <div className="flex items-center gap-2">
@@ -1215,311 +1214,296 @@ export default function App() {
           </div>
         </header>
 
-        {/* GLOBAL BROADCAST ANNOUNCEMENT BANNER */}
-        {announcement && (
-          <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-bold px-4 py-2 text-xs flex items-center justify-between shrink-0 shadow-md z-20">
-            <div className="flex items-center gap-2 max-w-5xl truncate mx-auto">
-              <Megaphone className="w-4 h-4 shrink-0 animate-bounce text-slate-900" />
-              <span className="truncate">{announcement}</span>
-            </div>
-            <button 
-              onClick={() => setAnnouncement('')}
-              className="p-1 hover:bg-amber-600/30 rounded-lg text-slate-900 transition-colors cursor-pointer"
-              title="Dismiss Banner"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+
 
         {/* WORKSPACE ACTIVE VIEW SECTION */}
         <main className="flex-1 overflow-y-auto bg-slate-50/50 pb-24 lg:pb-0" id="main-content-area">
           <div className="w-full flex flex-col h-full" id="sprint-dashboard-stage-wrapper">
             
             {/* View header description area */}
-            <div className="flex flex-row items-center justify-between gap-2 px-3 sm:px-8 py-2.5" id="view-intro-bar">
-              {/* Mobile Search Bar */}
-              <div className="lg:hidden relative flex-1 min-w-0">
-                <Search className="absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500 w-3.5 h-3.5 my-auto" />
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:border-indigo-300 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 rounded-xl py-1.5 pl-8 pr-3 text-xs outline-none shadow-xs truncate"
-                />
-              </div>
+            {(currentView === 'overview' || currentView === 'kanban') && (
+              <div className="flex flex-row items-center justify-between gap-2 px-3 sm:px-8 py-2.5" id="view-intro-bar">
+                {/* Mobile Search Bar */}
+                <div className="lg:hidden relative flex-1 min-w-0">
+                  <Search className="absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500 w-3.5 h-3.5 my-auto" />
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:border-indigo-300 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 rounded-xl py-1.5 pl-8 pr-3 text-xs outline-none shadow-xs truncate"
+                  />
+                </div>
 
-              {/* Grid-Utility bar widgets */}
-              {currentView !== 'inbox' && currentView !== 'analytics' && (
-                <>
-                  {/* Click outside backdrop for popovers */}
-                  {(isFilterOpen || isSortOpen) && (
-                    <div 
-                      className="fixed inset-0 z-20 bg-black/5 sm:bg-transparent" 
-                      onClick={() => { setIsFilterOpen(false); setIsSortOpen(false); }} 
-                    />
-                  )}
+                {/* Grid-Utility bar widgets */}
+                {currentView !== 'inbox' && currentView !== 'analytics' && (
+                  <>
+                    {/* Click outside backdrop for popovers */}
+                    {(isFilterOpen || isSortOpen) && (
+                      <div 
+                        className="fixed inset-0 z-20 bg-black/5 sm:bg-transparent" 
+                        onClick={() => { setIsFilterOpen(false); setIsSortOpen(false); }} 
+                      />
+                    )}
 
-                  <div className="w-fit ml-auto flex items-center gap-1 text-slate-500 dark:text-slate-400 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs relative z-20 shrink-0" id="utility-bar-widgets">
-                    
+                    <div className="w-fit ml-auto flex items-center gap-1 text-slate-500 dark:text-slate-400 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs relative z-20 shrink-0" id="utility-bar-widgets">
+                      
+                      {/* FILTER BUTTON & POPUP */}
+                      <div className="relative">
+                        <button 
+                          onClick={() => { setIsFilterOpen(!isFilterOpen); setIsSortOpen(false); }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            filterPriority !== 'ALL' || filterStatus !== 'ALL'
+                              ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs'
+                              : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
+                          }`} 
+                          title="Filter tasks"
+                          id="utility-filter-btn"
+                        >
+                          <Filter className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-bold">Filter</span>
+                          {(filterPriority !== 'ALL' || filterStatus !== 'ALL') && (
+                            <span className="flex items-center justify-center w-4 h-4 text-[9px] font-black bg-indigo-600 text-white rounded-full">
+                              {(filterPriority !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0)}
+                            </span>
+                          )}
+                        </button>
 
-
-                    {/* FILTER BUTTON & POPUP */}
-                    <div className="relative">
-                      <button 
-                        onClick={() => { setIsFilterOpen(!isFilterOpen); setIsSortOpen(false); }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          filterPriority !== 'ALL' || filterStatus !== 'ALL'
-                            ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
-                        }`} 
-                        title="Filter tasks"
-                        id="utility-filter-btn"
-                      >
-                        <Filter className="w-3.5 h-3.5" />
-                        <span className="text-[11px] font-bold">Filter</span>
-                        {(filterPriority !== 'ALL' || filterStatus !== 'ALL') && (
-                          <span className="flex items-center justify-center w-4 h-4 text-[9px] font-black bg-indigo-600 text-white rounded-full">
-                            {(filterPriority !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0)}
-                          </span>
-                        )}
-                      </button>
-
-                      {isFilterOpen && (
-                        <div className="absolute left-0 sm:left-auto sm:right-0 top-11 w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 animate-popup-in text-slate-800 dark:text-slate-100 space-y-4" id="filter-popover-menu">
-                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-                            <div className="flex items-center gap-2">
-                              <Filter className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                              <span className="text-xs font-black uppercase text-slate-800 dark:text-white tracking-wider">Filter Tasks</span>
+                        {isFilterOpen && (
+                          <div className="absolute left-0 sm:left-auto sm:right-0 top-11 w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 animate-popup-in text-slate-800 dark:text-slate-100 space-y-4" id="filter-popover-menu">
+                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                              <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                <span className="text-xs font-black uppercase text-slate-800 dark:text-white tracking-wider">Filter Tasks</span>
+                              </div>
+                              {(filterPriority !== 'ALL' || filterStatus !== 'ALL' || filterAssigned !== 'ME') && (
+                                <button 
+                                  onClick={() => { setFilterPriority('ALL'); setFilterStatus('ALL'); setFilterAssigned('ME'); }}
+                                  className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Clear All
+                                </button>
+                              )}
                             </div>
-                            {(filterPriority !== 'ALL' || filterStatus !== 'ALL' || filterAssigned !== 'ME') && (
-                              <button 
-                                onClick={() => { setFilterPriority('ALL'); setFilterStatus('ALL'); setFilterAssigned('ME'); }}
-                                className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
-                              >
-                                Clear All
-                              </button>
-                            )}
-                          </div>
 
-                          {/* Assignee Filter Selector */}
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Member</label>
-                            <div className="flex flex-wrap gap-1.5">
-                              <button
-                                onClick={() => setFilterAssigned('ME')}
-                                className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                                  filterAssigned === 'ME' || !isAdmin
-                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500/30 font-black'
-                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                                }`}
-                              >
-                                <User className="w-3 h-3 text-indigo-500" />
-                                My Assigned Tasks ({currentUser?.name ? currentUser.name.split(' ')[0] : 'Me'})
-                              </button>
-
-                              {isAdmin ? (
+                            {/* Assignee Filter Selector */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Member</label>
+                              <div className="flex flex-wrap gap-1.5">
                                 <button
-                                  onClick={() => setFilterAssigned('ALL')}
+                                  onClick={() => setFilterAssigned('ME')}
                                   className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                                    filterAssigned === 'ALL'
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-2 ring-emerald-500/30 font-black'
+                                    filterAssigned === 'ME' || !isAdmin
+                                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500/30 font-black'
                                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                                   }`}
                                 >
-                                  <Users className="w-3 h-3 text-emerald-500" />
-                                  All Workspace Tasks
+                                  <User className="w-3 h-3 text-indigo-500" />
+                                  My Assigned Tasks ({currentUser?.name ? currentUser.name.split(' ')[0] : 'Me'})
                                 </button>
-                              ) : (
-                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-900 px-2 py-1 rounded-xl flex items-center gap-1">
-                                  <span>🔒 Team Member: Restricted to assigned tasks</span>
-                                </span>
+
+                                {isAdmin ? (
+                                  <button
+                                    onClick={() => setFilterAssigned('ALL')}
+                                    className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                                      filterAssigned === 'ALL'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-2 ring-emerald-500/30 font-black'
+                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <Users className="w-3 h-3 text-emerald-500" />
+                                    All Workspace Tasks
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-900 px-2 py-1 rounded-xl flex items-center gap-1">
+                                    <span>🔒 Team Member: Restricted to assigned tasks</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Priority Filter Chip Selector */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Priority Level</label>
+                              <div className="flex flex-wrap gap-1.5">
+                                {[
+                                  { id: 'ALL', label: 'All', color: 'bg-slate-100 text-slate-700 border-slate-200' },
+                                  { id: 'High Priority', label: 'High', dot: 'bg-rose-500', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+                                  { id: 'Medium Priority', label: 'Medium', dot: 'bg-amber-500', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                                  { id: 'Low Priority', label: 'Low', dot: 'bg-blue-500', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+                                  { id: 'Minimal Priority', label: 'Minimal', dot: 'bg-slate-400', color: 'bg-slate-50 text-slate-600 border-slate-200' }
+                                ].map((p) => {
+                                  const active = filterPriority === p.id;
+                                  return (
+                                    <button
+                                      key={p.id}
+                                      onClick={() => setFilterPriority(p.id)}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                                        active 
+                                          ? `${p.color} ring-2 ring-indigo-500/30 shadow-xs font-black scale-105` 
+                                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      {p.dot && <span className={`w-2 h-2 rounded-full ${p.dot}`} />}
+                                      {p.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Status Filter Chip Selector */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status</label>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {[
+                                  { id: 'ALL', label: 'All Statuses' },
+                                  { id: 'Not started', label: 'Not Started', dot: 'bg-slate-400' },
+                                  { id: 'In progress', label: 'In Progress', dot: 'bg-indigo-500' },
+                                  { id: 'In review', label: 'In Review', dot: 'bg-purple-500' },
+                                  { id: 'Completed', label: 'Completed', dot: 'bg-emerald-500' }
+                                ].map((s) => {
+                                  const active = filterStatus === s.id;
+                                  return (
+                                    <button
+                                      key={s.id}
+                                      onClick={() => setFilterStatus(s.id)}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border text-left transition-all cursor-pointer ${
+                                        active 
+                                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-bold shadow-xs' 
+                                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      {s.dot ? <span className={`w-2 h-2 rounded-full ${s.dot}`} /> : <span className="w-2 h-2 rounded-full bg-slate-300" />}
+                                      <span className="truncate">{s.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Footer Stats summary */}
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                              <span>Showing {filteredTasks.length} of {tasks.length} tasks</span>
+                              <button
+                                onClick={() => setIsFilterOpen(false)}
+                                className="bg-slate-900 text-white hover:bg-slate-800 px-3 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SORT BUTTON & POPUP */}
+                      <div className="relative">
+                        <button 
+                          onClick={() => { setIsSortOpen(!isSortOpen); setIsFilterOpen(false); }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            sortBy !== 'default'
+                              ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs'
+                              : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
+                          }`} 
+                          title="Sort tasks"
+                          id="utility-sort-btn"
+                        >
+                          <ArrowUpDown className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-bold">Sort</span>
+                          {sortBy !== 'default' && (
+                            <span className="w-2 h-2 bg-indigo-600 rounded-full" />
+                          )}
+                        </button>
+
+                        {isSortOpen && (
+                          <div className="absolute left-0 sm:left-auto sm:right-0 top-11 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 animate-popup-in text-slate-800 dark:text-slate-100 space-y-3" id="sort-popover-menu">
+                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                              <div className="flex items-center gap-2">
+                                <ArrowUpDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                <span className="text-xs font-black uppercase text-slate-800 dark:text-white tracking-wider">Sort Tasks</span>
+                              </div>
+                              {sortBy !== 'default' && (
+                                <button 
+                                  onClick={() => { setSortBy('default'); setSortOrder('asc'); }}
+                                  className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Reset
+                                </button>
                               )}
                             </div>
-                          </div>
 
-                          {/* Priority Filter Chip Selector */}
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Priority Level</label>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="space-y-1">
                               {[
-                                { id: 'ALL', label: 'All', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-                                { id: 'High Priority', label: 'High', dot: 'bg-rose-500', color: 'bg-rose-50 text-rose-700 border-rose-200' },
-                                { id: 'Medium Priority', label: 'Medium', dot: 'bg-amber-500', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-                                { id: 'Low Priority', label: 'Low', dot: 'bg-blue-500', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-                                { id: 'Minimal Priority', label: 'Minimal', dot: 'bg-slate-400', color: 'bg-slate-50 text-slate-600 border-slate-200' }
-                              ].map((p) => {
-                                const active = filterPriority === p.id;
+                                { id: 'default', label: 'Default Order' },
+                                { id: 'title', label: 'Task Title (A-Z)' },
+                                { id: 'priority', label: 'Priority Level' },
+                                { id: 'status', label: 'Task Status' },
+                                { id: 'dueDate', label: 'Due Date' }
+                              ].map((opt) => {
+                                const active = sortBy === opt.id;
                                 return (
                                   <button
-                                    key={p.id}
-                                    onClick={() => setFilterPriority(p.id)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                                    key={opt.id}
+                                    onClick={() => setSortBy(opt.id as any)}
+                                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                                       active 
-                                        ? `${p.color} ring-2 ring-indigo-500/30 shadow-xs font-black scale-105` 
-                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                        ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 shadow-2xs' 
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                                     }`}
                                   >
-                                    {p.dot && <span className={`w-2 h-2 rounded-full ${p.dot}`} />}
-                                    {p.label}
+                                    <span>{opt.label}</span>
+                                    {active && <span className="text-indigo-600 dark:text-indigo-400">✓</span>}
                                   </button>
                                 );
                               })}
                             </div>
-                          </div>
 
-                          {/* Status Filter Chip Selector */}
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status</label>
-                            <div className="grid grid-cols-2 gap-1.5">
-                              {[
-                                { id: 'ALL', label: 'All Statuses' },
-                                { id: 'Not started', label: 'Not Started', dot: 'bg-slate-400' },
-                                { id: 'In progress', label: 'In Progress', dot: 'bg-indigo-500' },
-                                { id: 'In review', label: 'In Review', dot: 'bg-purple-500' },
-                                { id: 'Completed', label: 'Completed', dot: 'bg-emerald-500' }
-                              ].map((s) => {
-                                const active = filterStatus === s.id;
-                                return (
-                                  <button
-                                    key={s.id}
-                                    onClick={() => setFilterStatus(s.id)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border text-left transition-all cursor-pointer ${
-                                      active 
-                                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-bold shadow-xs' 
-                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                                    }`}
-                                  >
-                                    {s.dot ? <span className={`w-2 h-2 rounded-full ${s.dot}`} /> : <span className="w-2 h-2 rounded-full bg-slate-300" />}
-                                    <span className="truncate">{s.label}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Footer Stats summary */}
-                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-                            <span>Showing {filteredTasks.length} of {tasks.length} tasks</span>
-                            <button
-                              onClick={() => setIsFilterOpen(false)}
-                              className="bg-slate-900 text-white hover:bg-slate-800 px-3 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SORT BUTTON & POPUP */}
-                    <div className="relative">
-                      <button 
-                        onClick={() => { setIsSortOpen(!isSortOpen); setIsFilterOpen(false); }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          sortBy !== 'default'
-                            ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
-                        }`} 
-                        title="Sort tasks"
-                        id="utility-sort-btn"
-                      >
-                        <ArrowUpDown className="w-3.5 h-3.5" />
-                        <span className="text-[11px] font-bold">Sort</span>
-                        {sortBy !== 'default' && (
-                          <span className="w-2 h-2 bg-indigo-600 rounded-full" />
-                        )}
-                      </button>
-
-                      {isSortOpen && (
-                        <div className="absolute left-0 sm:left-auto sm:right-0 top-11 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 animate-popup-in text-slate-800 dark:text-slate-100 space-y-3" id="sort-popover-menu">
-                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                            <div className="flex items-center gap-2">
-                              <ArrowUpDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                              <span className="text-xs font-black uppercase text-slate-800 dark:text-white tracking-wider">Sort Tasks</span>
-                            </div>
                             {sortBy !== 'default' && (
-                              <button 
-                                onClick={() => { setSortBy('default'); setSortOrder('asc'); }}
-                                className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
-                              >
-                                Reset
-                              </button>
+                              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Direction</span>
+                                <button
+                                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                  className="text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                                >
+                                  {sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
+                                </button>
+                              </div>
                             )}
                           </div>
+                        )}
+                      </div>
 
-                          <div className="space-y-1">
-                            {[
-                              { id: 'default', label: 'Default Order' },
-                              { id: 'title', label: 'Task Title (A-Z)' },
-                              { id: 'priority', label: 'Priority Level' },
-                              { id: 'status', label: 'Task Status' },
-                              { id: 'dueDate', label: 'Due Date' }
-                            ].map((opt) => {
-                              const active = sortBy === opt.id;
-                              return (
-                                <button
-                                  key={opt.id}
-                                  onClick={() => setSortBy(opt.id as any)}
-                                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                                    active 
-                                      ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 shadow-2xs' 
-                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                  }`}
-                                >
-                                  <span>{opt.label}</span>
-                                  {active && <span className="text-indigo-600 dark:text-indigo-400">✓</span>}
-                                </button>
-                              );
-                            })}
-                          </div>
+                      {/* FULLSCREEN BUTTON */}
+                      <button 
+                        onClick={() => {
+                          const nextState = !isFullscreen;
+                          setIsFullscreen(nextState);
+                          if (nextState) {
+                            if (document.documentElement.requestFullscreen) {
+                              document.documentElement.requestFullscreen().catch(() => {});
+                            }
+                          } else {
+                            if (document.fullscreenElement && document.exitFullscreen) {
+                              document.exitFullscreen().catch(() => {});
+                            }
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          isFullscreen 
+                            ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs' 
+                            : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
+                        }`} 
+                        title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen View'}
+                        id="utility-fullscreen-btn"
+                      >
+                        {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                      </button>
 
-                          {sortBy !== 'default' && (
-                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Direction</span>
-                              <button
-                                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                className="text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
-                              >
-                                {sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
-
-                    {/* FULLSCREEN BUTTON */}
-                    <button 
-                      onClick={() => {
-                        const nextState = !isFullscreen;
-                        setIsFullscreen(nextState);
-                        if (nextState) {
-                          if (document.documentElement.requestFullscreen) {
-                            document.documentElement.requestFullscreen().catch(() => {});
-                          }
-                        } else {
-                          if (document.fullscreenElement && document.exitFullscreen) {
-                            document.exitFullscreen().catch(() => {});
-                          }
-                        }
-                      }}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        isFullscreen 
-                          ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200/80 dark:border-indigo-800 shadow-xs' 
-                          : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
-                      }`} 
-                      title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen View'}
-                      id="utility-fullscreen-btn"
-                    >
-                      {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                    </button>
-
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Active Rendered Content Stage */}
             <div 
